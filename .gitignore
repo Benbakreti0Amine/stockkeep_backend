@@ -99,6 +99,7 @@ celerybeat-schedule.*
 
 # Environments 
 myenv
+.env
 # mkdocs documentation 
 /site 
 
@@ -129,3 +130,4 @@ GitHub.sublime-settings
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
