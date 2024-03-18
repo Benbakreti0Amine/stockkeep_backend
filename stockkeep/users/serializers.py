@@ -13,6 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username','password', 'email', 'first_name', 'last_name', 'is_active','password','role']
 
+
     def validate(self, attrs):
      email = attrs.get("email")  # Use get() method to safely retrieve email field
 

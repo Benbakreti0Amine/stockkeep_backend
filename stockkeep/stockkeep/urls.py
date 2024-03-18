@@ -45,5 +45,5 @@ urlpatterns = [
     path('structure/', include('structure.urls')),
     path('consom/', include('consommateur.urls')),
     path('role/', include('role.urls')),
-    path('', include('Directeur.urls')),
+
 ]

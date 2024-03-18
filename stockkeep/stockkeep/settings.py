@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'consommateur',
     'role',
     'drf_yasg', 
-    'Directeur',
+
 ]
 
 
