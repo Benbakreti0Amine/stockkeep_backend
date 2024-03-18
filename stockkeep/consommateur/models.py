@@ -2,12 +2,10 @@ from django.db import models
 from users.models import User
 from structure.models import Structure
 # Create your models here.
+from django.contrib.auth.models import  BaseUserManager
 
-class Consommateur(User):
-    structure = models.ForeignKey(Structure,on_delete=models.SET_NULL,null=True)
-
-    
-    def create_user(self, username, email,first_name,last_name, password, **kwags):
+class MyUserManager(BaseUserManager): 
+     def create_user(self, username, email,first_name,last_name, password, **kwags):
         if not email:
             raise ValueError('Users must have an email address')
         if not username:
@@ -27,3 +25,10 @@ class Consommateur(User):
         user.set_password(password)
         user.save(using=self._db)
         return user
+     
+
+class Consommateur(User):
+    structure = models.ForeignKey(Structure,on_delete=models.SET_NULL,null=True)
+    objects = MyUserManager()
+
+   

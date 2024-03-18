@@ -4,7 +4,10 @@ from .models import Structure
 from .serializers import StructureSerializer
 
 
+
+
 class ListCreateStructure(generics.ListCreateAPIView):
+    permission_classes = []
     queryset = Structure.objects.all()
     serializer_class = StructureSerializer
 

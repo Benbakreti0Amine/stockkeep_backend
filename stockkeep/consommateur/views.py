@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics
-
 from role.models import Role
 from .models import Consommateur
 from .serializers import UserSerializer
@@ -10,6 +9,7 @@ from rest_framework import status
 # Create your views here.
 
 class ListCreateCons(generics.ListCreateAPIView):
+
     queryset = Consommateur.objects.all()
     serializer_class = UserSerializer
 

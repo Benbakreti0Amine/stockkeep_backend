@@ -23,8 +23,9 @@ class MyUserManager(BaseUserManager):
             username=username,
             email=self.normalize_email(email),
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
         )
+
         user.is_active  = True
         user.set_password(password)
         user.save(using=self._db)
@@ -33,10 +34,16 @@ class MyUserManager(BaseUserManager):
     def create_superuser(self, username, email,first_name,last_name, password):
         user = self.create_user(username=username,email=email, password=password,first_name=first_name,last_name=last_name)
 
+
         user.is_staff = True
+        role = user.role
+        if role is None:
+            role = 'admin'
+        # Retrieve the corresponding Role instance from the database
+        role_instance, _ = Role.objects.get_or_create(name=role)
         user.is_superuser = True
-        user.save(using=self._db)
-        return user 
+        user.role=role_instance
+        user.save()
 
 class User(AbstractBaseUser, PermissionsMixin):
 
