@@ -42,8 +42,8 @@ class MyUserManager(BaseUserManager):
         # Retrieve the corresponding Role instance from the database
         role_instance, _ = Role.objects.get_or_create(name=role)
         user.is_superuser = True
-        user.role=role_instance
-        user.save()
+        user.save(using=self._db)
+        return user 
 
 class User(AbstractBaseUser, PermissionsMixin):
 
@@ -54,7 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name   = models.CharField(max_length=50, null=True, blank=True)
     is_active   = models.BooleanField(default=True, null=False)
     is_staff    = models.BooleanField(default=False, null=False)
-    role = models.ForeignKey(Role,on_delete=models.SET_NULL,null=True,default='consommateur')
+    role = models.ForeignKey(Role,on_delete=models.SET_NULL,null=True)
 
 
    

@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import generics
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from users.permissions import HasPermission
 from users.tokens import create_jwt_pair_for_user
 from .models import User
 from .serializers import UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer
@@ -14,16 +15,21 @@ from django.utils.http import urlsafe_base64_encode
 from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework.reverse import reverse
+from rest_framework.permissions import BasePermission
 # Create your views here.
+
 
 class ListCreateUser(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    
+
 
 
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [HasPermission]
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
