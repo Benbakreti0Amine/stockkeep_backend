@@ -15,6 +15,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework.reverse import reverse
+from urllib.parse import urljoin
 from rest_framework.permissions import BasePermission
 # Create your views here.
 
@@ -22,7 +23,7 @@ from rest_framework.permissions import BasePermission
 class ListCreateUser(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
+    permission_classes = []
 
 
 
@@ -30,6 +31,12 @@ class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [HasPermission]
+
+class RetriveByUsername(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = 'username'
+
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
@@ -70,6 +77,7 @@ class PasswordReset(generics.GenericAPIView):
     """
 
     serializer_class = ResetPasswordEmailSerializer
+    permission_classes = []
 
     def post(self, request):
         """
@@ -87,10 +95,14 @@ class PasswordReset(generics.GenericAPIView):
             reset_url = reverse(
                 "reset-password",
                 kwargs={"encoded_pk": encoded_pk, "token": token},request=request)
-            
+            print(reset_url)
+            print(settings.FRONTEND_BASE_URL)
+            reset_url2 = urljoin(settings.FRONTEND_BASE_URL, f"/user/password-reset/{encoded_pk}/{token}/")
+
+            print(reset_url2)
             # send the rest_link as mail to the user.
             subject = 'welcome to our app'
-            message = f"Your password rest link: {reset_url}" 
+            message = f"Your password rest link: {reset_url2}" 
             email_from = settings.EMAIL_HOST_USER
             recipient_list = [email ]
  
@@ -113,6 +125,7 @@ class ResetPasswordAPI(generics.GenericAPIView):
     """
 
     serializer_class = ResetPasswordSerializer
+    permission_classes = []
 
     def patch(self, request, *args, **kwargs):
         """
