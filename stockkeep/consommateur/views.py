@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import generics
 
 from role.models import Role
+from users.permissions import HasPermission
 from .models import Consommateur
 from .serializers import UserSerializer
 from rest_framework.views import APIView
@@ -14,6 +15,7 @@ from rest_framework import status
 class ListCreateCons(generics.ListCreateAPIView):
     queryset = Consommateur.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [HasPermission]
 
     def perform_create(self, serializer):
         print (serializer.validated_data)

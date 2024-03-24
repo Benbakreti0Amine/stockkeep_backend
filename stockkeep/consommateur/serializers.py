@@ -5,6 +5,7 @@ from .models import Consommateur
 
 class UserSerializer(serializers.ModelSerializer):
     structure = serializers.SlugRelatedField(queryset = Structure.objects.all(), slug_field='name')
+    role = serializers.SlugRelatedField(read_only=True, slug_field='name')
 
     
 
@@ -17,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     def to_representation(self,instance):
         rep = super(UserSerializer,self).to_representation(instance)
         rep['structure']=instance.structure.name
-        rep['role']=instance.role.name
+        # rep['role']=instance.role.name
         return rep
     
 

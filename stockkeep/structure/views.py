@@ -14,4 +14,5 @@ class ListCreateStructure(generics.ListCreateAPIView):
 class RetrieveUpdateDeleteStructure(generics.RetrieveUpdateDestroyAPIView):
     queryset = Structure.objects.all()
     serializer_class = StructureSerializer
+    permission_classes = [HasPermission]
 
