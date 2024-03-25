@@ -1,20 +1,32 @@
 
 from rest_framework import generics,status
 from rest_framework.views import APIView
-from users.permissions import HasPermission
 from .models import  Role, RolePermission
 from .serializers import  RolePermissionSerializer, RoleSerializer
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 class ListCreateRole(generics.ListCreateAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [HasPermission]
 
 class RetrieveUpdateDeleteRole(generics.RetrieveUpdateDestroyAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [HasPermission]
+    
+#verification if this role has user related with it
+    def destroy(self, request, *args, **kwargs):
+            instance = self.get_object()
+
+            print(instance)
+            
+            # Check if the instance has any related objects
+            if instance.user_set.exists():
+                # Customize this message according to your requirements
+                error_message = "Cannot delete this object because it has related objects."
+                raise ValidationError(error_message)
+
+            return super().destroy(request, *args, **kwargs)
 
 class ListCreatePermission(generics.ListCreateAPIView):
     queryset = RolePermission.objects.all()

@@ -34,15 +34,17 @@ class MyUserManager(BaseUserManager):
     def create_superuser(self, username, email,first_name,last_name, password):
         user = self.create_user(username=username,email=email, password=password,first_name=first_name,last_name=last_name)
 
-
         user.is_staff = True
         role = user.role
+        print(role)
         if role is None:
             role = 'admin'
         # Retrieve the corresponding Role instance from the database
+        print(role)
         role_instance, _ = Role.objects.get_or_create(name=role)
         user.is_superuser = True
-        user.save(using=self._db)
+        user.role = role_instance
+        user.save()
         return user 
 
 class User(AbstractBaseUser, PermissionsMixin):

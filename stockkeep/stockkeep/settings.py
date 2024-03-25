@@ -64,7 +64,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'stockkeep.urls'
 
 REST_FRAMEWORK = {
-     "DEFAULT_PERMISSION_CLASSES": [
+    "DEFAULT_PERMISSION_CLASSES": [
         "users.permissions.HasPermission",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": (
