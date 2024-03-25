@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'structure',
     'consommateur',
     'role',
-    'drf_yasg', 
+    'drf_yasg',
+    'corsheaders',
 
 ]
 
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -162,3 +164,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:5317')
+
+CORS_ORIGIN_ALLOW_ALL = True 
+CORS_ALLOW_CREDENTIALS = True 
