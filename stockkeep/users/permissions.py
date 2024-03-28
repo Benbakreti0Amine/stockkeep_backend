@@ -8,7 +8,11 @@ def _permission(request, view) -> bool:
     """
     Dynamically extracts permission from Django Role
     """
-
+    if not request.user.is_authenticated:
+        return False
+    if request.user.is_superuser:
+        return True
+    
     action_type = ''
     if request.method == 'GET':
         action_type = 'view'

@@ -2,33 +2,33 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import generics
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from users.permissions import HasPermission
 from users.tokens import create_jwt_pair_for_user
 from .models import User
-from .serializers import UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer
+from .serializers import UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.request import Request
-from django.contrib.auth import authenticate,get_user_model
+from django.contrib.auth import authenticate,get_user_model,update_session_auth_hash #bach t5lik dir login
 from django.utils.http import urlsafe_base64_encode
 from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework.reverse import reverse
-from rest_framework.permissions import BasePermission
+from urllib.parse import urljoin
+from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 
 
 class ListCreateUser(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-   
     
+
 
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
+    permission_classes = [HasPermission]
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
@@ -56,7 +56,7 @@ class LoginView(APIView):
             return Response(data=response, status=status.HTTP_200_OK)
 
         else:
-            return Response(data={"message": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(data={"message": "Invalid email or password"})
 
     def get(self, request: Request):
         content = {"user": str(request.user), "auth": str(request.auth)}
@@ -69,6 +69,7 @@ class PasswordReset(generics.GenericAPIView):
     """
 
     serializer_class = ResetPasswordEmailSerializer
+    permission_classes = []
 
     def post(self, request):
         """
@@ -86,10 +87,14 @@ class PasswordReset(generics.GenericAPIView):
             reset_url = reverse(
                 "reset-password",
                 kwargs={"encoded_pk": encoded_pk, "token": token},request=request)
-            
+            print(reset_url)
+            print(settings.FRONTEND_BASE_URL)
+            reset_url2 = urljoin(settings.FRONTEND_BASE_URL, f"/resetpassword/{encoded_pk}/{token}/")
+
+            print(reset_url2)
             # send the rest_link as mail to the user.
             subject = 'welcome to our app'
-            message = f"Your password rest link: {reset_url}" 
+            message = f"Your password rest link: {reset_url2}" 
             email_from = settings.EMAIL_HOST_USER
             recipient_list = [email ]
  
@@ -115,6 +120,7 @@ class ResetPasswordAPI(generics.GenericAPIView):
     """
 
     serializer_class = ResetPasswordSerializer
+    permission_classes = []
 
     def patch(self, request, *args, **kwargs):
         """
@@ -124,3 +130,25 @@ class ResetPasswordAPI(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(
             {"message": "Password reset success"},status=status.HTTP_200_OK,)
+
+class PassChangeview(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+            serializer = ChangePasswordSerializer(data=request.data)
+            if serializer.is_valid():
+                user = request.user
+                if user.check_password(serializer.data.get('old_password')):
+                    user.set_password(serializer.data.get('new_password'))
+                    user.save()
+                    update_session_auth_hash(request, user)  # To update session after password change
+
+                    return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+                
+                return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RetriveByUsername(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = 'username'
