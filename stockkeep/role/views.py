@@ -1,6 +1,9 @@
 
 from rest_framework import generics,status
 from rest_framework.views import APIView
+from rest_framework import generics
+
+from users.permissions import HasPermission
 from .models import  Role, RolePermission
 from .serializers import  RolePermissionSerializer, RoleSerializer
 from rest_framework.response import Response
@@ -22,6 +25,20 @@ class ListCreateRole(generics.ListCreateAPIView):
         operation_summary= "create a role",
         operation_description=""
         )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="list a role",
+        operation_description=""
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary= "create a role",
+        operation_description=""
+    )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 

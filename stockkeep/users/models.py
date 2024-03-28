@@ -42,7 +42,8 @@ class MyUserManager(BaseUserManager):
         print(role)
         role_instance, _ = Role.objects.get_or_create(name=role)
         user.is_superuser = True
-        user.role = role_instance
+        user.role=role_instance
+        user.set_password(password)
         user.save()
         return user 
 
