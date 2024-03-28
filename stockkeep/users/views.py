@@ -95,7 +95,7 @@ class PasswordReset(generics.GenericAPIView):
                 kwargs={"encoded_pk": encoded_pk, "token": token},request=request)
             print(reset_url)
             print(settings.FRONTEND_BASE_URL)
-            reset_url2 = urljoin(settings.FRONTEND_BASE_URL, f"/user/password-reset/{encoded_pk}/{token}/")
+            reset_url2 = urljoin(settings.FRONTEND_BASE_URL, f"/resetpassword/{encoded_pk}/{token}/")
 
             print(reset_url2)
             # send the rest_link as mail to the user.

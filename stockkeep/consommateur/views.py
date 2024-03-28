@@ -26,7 +26,7 @@ class ListCreateCons(generics.ListCreateAPIView):
         # Retrieve the corresponding Role instance from the database
         role_instance, _ = Role.objects.get_or_create(name=role)
         serializer.save(role=role_instance)
-
+    
 
 
 
