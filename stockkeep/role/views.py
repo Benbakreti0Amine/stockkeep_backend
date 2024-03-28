@@ -8,7 +8,6 @@ from drf_yasg.utils import swagger_auto_schema
 class ListCreateRole(generics.ListCreateAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [HasPermission]
 
     @swagger_auto_schema(
         operation_summary="list a role",
@@ -27,7 +26,6 @@ class ListCreateRole(generics.ListCreateAPIView):
 class RetrieveUpdateDeleteRole(generics.RetrieveUpdateDestroyAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [HasPermission]
 
 class ListCreatePermission(generics.ListCreateAPIView):
     queryset = RolePermission.objects.all()

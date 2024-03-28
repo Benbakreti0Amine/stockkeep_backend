@@ -15,7 +15,6 @@ from rest_framework import status
 class ListCreateCons(generics.ListCreateAPIView):
     queryset = Consommateur.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [HasPermission]
 
     def perform_create(self, serializer):
         print (serializer.validated_data)
