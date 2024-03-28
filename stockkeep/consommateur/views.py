@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import generics
 
 from role.models import Role
+from users.permissions import HasPermission
 from .models import Consommateur
 from .serializers import UserSerializer
 from rest_framework.views import APIView
