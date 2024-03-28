@@ -22,13 +22,13 @@ from rest_framework.permissions import IsAuthenticated
 class ListCreateUser(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
+    
 
 
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
+    permission_classes = [HasPermission]
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
@@ -56,8 +56,8 @@ class LoginView(APIView):
             return Response(data=response, status=status.HTTP_200_OK)
 
         else:
-            return Response(data={"message": "Invalid email or password"} , status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(data={"message": "Invalid email or password"})
+
     def get(self, request: Request):
         content = {"user": str(request.user), "auth": str(request.auth)}
 
@@ -104,6 +104,9 @@ class PasswordReset(generics.GenericAPIView):
             return Response(
                 {"message": "check your email" },
                 status=status.HTTP_200_OK,)
+            # return Response(
+            #     {"message": "check your email","encoded_pk": encoded_pk, "token": token },
+            #     status=status.HTTP_200_OK,)
         else:
             return Response(
                 {"message": "User doesn't exists"},
