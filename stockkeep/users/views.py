@@ -30,12 +30,6 @@ class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
 
 
-class RetriveByUsername(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    lookup_field = 'username'
-
-
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
@@ -150,3 +144,8 @@ class PassChangeview(APIView):
                 return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
             
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RetriveByUsername(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = 'username'

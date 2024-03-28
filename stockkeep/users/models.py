@@ -36,7 +36,6 @@ class MyUserManager(BaseUserManager):
 
         user.is_staff = True
         role = user.role
-        print(role)
         if role is None:
             role = 'admin'
         # Retrieve the corresponding Role instance from the database
