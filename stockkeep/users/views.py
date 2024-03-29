@@ -133,23 +133,6 @@ class ResetPasswordAPI(generics.GenericAPIView):
         return Response(
             {"message": "Password reset success"},status=status.HTTP_200_OK,)
 
-class PassChangeview(APIView):
-    permission_classes = [IsAuthenticated]
-    def post(self, request):
-            serializer = ChangePasswordSerializer(data=request.data)
-            if serializer.is_valid():
-                user = request.user
-                if user.check_password(serializer.data.get('old_password')):
-                    user.set_password(serializer.data.get('new_password'))
-                    user.save()
-                    update_session_auth_hash(request, user)  # To update session after password change
-
-                    return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-                
-                return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class RetriveByUsername(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -178,18 +161,4 @@ class ChangePasswordView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-class PermissionsCodenameView(APIView):
-    def get(self, request):
-        if not request.user.is_authenticated:
-            return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if request.user.is_superuser:
-            # Superuser has all permissions
-            permissions = Permission.objects.all()
-        else:
-            # Retrieve permissions based on user's role
-            permissions = RolePermission.objects.filter(role=request.user.role).values_list('auth_permission__codename', flat=True)
-            # 'auth_permission__codename' specifies the field to be retrieved from the related Permission model
-            # Setting flat=True ensures a flat list is returned instead of a list of tuples
-
-        return Response({"permissions": permissions}, status=status.HTTP_200_OK)
