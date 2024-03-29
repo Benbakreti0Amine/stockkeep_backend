@@ -28,6 +28,7 @@ class ListCreateRole(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
+    
 
 class RetrieveUpdateDeleteRole(generics.RetrieveUpdateDestroyAPIView):
     queryset = Role.objects.all()
