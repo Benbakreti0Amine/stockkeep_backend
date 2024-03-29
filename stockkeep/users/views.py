@@ -5,7 +5,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from role.models import RolePermission
 from users.tokens import create_jwt_pair_for_user
 from .models import User
-from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer,PermissionSerializer
+from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,PermissionSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
