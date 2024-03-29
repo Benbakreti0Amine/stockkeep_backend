@@ -3,8 +3,8 @@ from rest_framework.validators import ValidationError
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from role.models import Role
-
 from .models import User
+from django.contrib.auth.models import Permission
 
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.SlugRelatedField(queryset = Role.objects.all(), slug_field='name')
@@ -41,9 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ResetPasswordEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
-class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
+
 
 
 class ResetPasswordSerializer(serializers.Serializer):
@@ -81,3 +79,20 @@ class ResetPasswordSerializer(serializers.Serializer):
 class NewPasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+class PermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permission
+        fields = ['codename']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Filter out permissions you don't want to include
+        if data['codename'] in [
+            "add_logentry","change_logentry","delete_logentry","view_logentry",
+            "add_group","change_group","delete_group","view_group",
+            "add_permission","change_permission","delete_permission","view_permission",
+            "add_session","change_session","delete_session","view_session",
+            "add_contenttype","change_contenttype","delete_contenttype","view_contenttype"]:
+            return None  # Skip this permission
+        return data

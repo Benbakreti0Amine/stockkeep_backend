@@ -5,7 +5,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from role.models import RolePermission
 from users.tokens import create_jwt_pair_for_user
 from .models import User
-from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer
+from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer,PermissionSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,6 +18,7 @@ from rest_framework.reverse import reverse
 from urllib.parse import urljoin
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import Permission
+from django.core.serializers import serialize
 # Create your views here.
 
 
@@ -30,10 +31,6 @@ class ListCreateUser(generics.ListCreateAPIView):
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-<<<<<<< HEAD
-=======
-
->>>>>>> 070f3f362098294e1fd12e705439ae72304a8f54
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
@@ -136,22 +133,7 @@ class ResetPasswordAPI(generics.GenericAPIView):
         return Response(
             {"message": "Password reset success"},status=status.HTTP_200_OK,)
 
-class PassChangeview(APIView):
-    permission_classes = [IsAuthenticated]
-    def post(self, request):
-            serializer = ChangePasswordSerializer(data=request.data)
-            if serializer.is_valid():
-                user = request.user
-                if user.check_password(serializer.data.get('old_password')):
-                    user.set_password(serializer.data.get('new_password'))
-                    user.save()
-                    update_session_auth_hash(request, user)  # To update session after password change
 
-                    return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-                
-                return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RetriveByUsername(generics.RetrieveAPIView):
     queryset = User.objects.all()
@@ -182,6 +164,7 @@ class ChangePasswordView(APIView):
     
 
 class PermissionsCodenameView(APIView):
+
     def get(self, request):
         if not request.user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -189,10 +172,8 @@ class PermissionsCodenameView(APIView):
         if request.user.is_superuser:
             # Superuser has all permissions
             permissions = Permission.objects.all()
-        else:
-            # Retrieve permissions based on user's role
-            permissions = RolePermission.objects.filter(role=request.user.role).values_list('auth_permission__codename', flat=True)
-            # 'auth_permission__codename' specifies the field to be retrieved from the related Permission model
-            # Setting flat=True ensures a flat list is returned instead of a list of tuples
+            serialized_permissions = PermissionSerializer(permissions, many=True)  # Need to specify many=True for queryset
+            filtered_permissions = [perm for perm in serialized_permissions.data if perm] # give you all permission than not none on to_represtation
+            return Response({"permissions": filtered_permissions}, status=status.HTTP_200_OK)
 
-        return Response({"permissions": permissions}, status=status.HTTP_200_OK)
+        return Response({"detail": "User is not a superuser."}, status=status.HTTP_403_FORBIDDEN)
