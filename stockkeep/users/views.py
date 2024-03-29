@@ -28,7 +28,6 @@ class ListCreateUser(generics.ListCreateAPIView):
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [HasPermission]
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):

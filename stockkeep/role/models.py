@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import Permission
 
+Permission.__str__ = lambda self: '%s' % (self.codename)
+
 class Role(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
