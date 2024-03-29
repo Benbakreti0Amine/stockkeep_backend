@@ -4,7 +4,7 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from users.tokens import create_jwt_pair_for_user
 from .models import User
-from .serializers import UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer
+from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -28,7 +28,7 @@ class ListCreateUser(generics.ListCreateAPIView):
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [HasPermission]
+
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
@@ -152,3 +152,25 @@ class RetriveByUsername(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = NewPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            old_password = serializer.data.get('old_password')
+            new_password = serializer.data.get('new_password')
+
+            # Check if the old password is correct
+            if not user.check_password(old_password):
+                return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Set the new password
+            user.set_password(new_password)
+            user.save()
+            update_session_auth_hash(request, user) 
+
+            return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
