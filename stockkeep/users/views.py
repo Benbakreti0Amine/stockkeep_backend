@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import generics
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from role.models import RolePermission
 from users.tokens import create_jwt_pair_for_user
 from .models import User
 from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer
@@ -16,6 +17,7 @@ from django.core.mail import send_mail
 from rest_framework.reverse import reverse
 from urllib.parse import urljoin
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import Permission
 # Create your views here.
 
 
@@ -174,3 +176,20 @@ class ChangePasswordView(APIView):
 
             return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class PermissionsCodenameView(APIView):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if request.user.is_superuser:
+            # Superuser has all permissions
+            permissions = Permission.objects.all()
+        else:
+            # Retrieve permissions based on user's role
+            permissions = RolePermission.objects.filter(role=request.user.role).values_list('auth_permission__codename', flat=True)
+            # 'auth_permission__codename' specifies the field to be retrieved from the related Permission model
+            # Setting flat=True ensures a flat list is returned instead of a list of tuples
+
+        return Response({"permissions": permissions}, status=status.HTTP_200_OK)

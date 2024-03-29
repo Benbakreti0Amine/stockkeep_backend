@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission
-from django.contrib.auth.models import Permission
+
 
 from role.models import RolePermission
 
