@@ -17,5 +17,6 @@ urlpatterns = [
     path("password-reset/",views.PasswordReset.as_view(),name="request-password-reset"),
     path("password-reset/<str:encoded_pk>/<str:token>/", views.ResetPasswordAPI.as_view(),name="reset-password"),
     path("password-change/",views.ChangePasswordView.as_view(),name="request-password-change"),
+    path("getallpermission/",views.PermissionsCodenameView.as_view(),name="getallpermission"),
 
 ]

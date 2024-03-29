@@ -70,3 +70,5 @@ class GetPermOfRole(APIView):
                 return Response({'error': f'Role with name {role_name} does not exist'}, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({'error': 'Role name not provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+

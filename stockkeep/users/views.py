@@ -5,7 +5,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from role.models import RolePermission
 from users.tokens import create_jwt_pair_for_user
 from .models import User
-from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,ChangePasswordSerializer
+from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,PermissionSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,6 +18,7 @@ from rest_framework.reverse import reverse
 from urllib.parse import urljoin
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import Permission
+from django.core.serializers import serialize
 # Create your views here.
 
 
@@ -30,7 +31,6 @@ class ListCreateUser(generics.ListCreateAPIView):
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
@@ -133,6 +133,8 @@ class ResetPasswordAPI(generics.GenericAPIView):
         return Response(
             {"message": "Password reset success"},status=status.HTTP_200_OK,)
 
+
+
 class RetriveByUsername(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -161,4 +163,17 @@ class ChangePasswordView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class PermissionsCodenameView(APIView):
 
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if request.user.is_superuser:
+            # Superuser has all permissions
+            permissions = Permission.objects.all()
+            serialized_permissions = PermissionSerializer(permissions, many=True)  # Need to specify many=True for queryset
+            filtered_permissions = [perm for perm in serialized_permissions.data if perm] # give you all permission than not none on to_represtation
+            return Response({"permissions": filtered_permissions}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "User is not a superuser."}, status=status.HTTP_403_FORBIDDEN)
