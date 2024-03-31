@@ -9,6 +9,7 @@ class Chapitre(models.Model):
 class Article(models.Model):
     designation = models.CharField(max_length=255,unique=True)
     chapitre = models.ForeignKey(Chapitre, related_name='articles', on_delete=models.CASCADE)
+    tva = models.DecimalField(max_digits=10, decimal_places=2, default=19)
 
     def __str__(self):
         return self.designation
@@ -39,7 +40,7 @@ class Item(models.Model):
 class BonDeCommande(models.Model):
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
     items = models.ManyToManyField(Item)  # Change ForeignKey to ManyToManyField
-    tva = models.DecimalField(max_digits=10, decimal_places=2)
+    tva = models.DecimalField(max_digits=10, decimal_places=2, null=True,blank=True)
     montant_global = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
     date = models.DateField(auto_now_add=True)
     STATUS_CHOICES = (
@@ -49,6 +50,7 @@ class BonDeCommande(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
 
+    
 
     def __str__(self):
         return f"Commande {self.id} - {self.fournisseur} - {self.date}"

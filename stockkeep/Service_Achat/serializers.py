@@ -10,7 +10,7 @@ class articleSerializer(serializers.ModelSerializer):
     chapitre = serializers.SlugRelatedField(queryset = Chapitre.objects.all(), slug_field='libelle')
     class Meta:
         model = Article
-        fields = ['designation','chapitre']
+        fields = ['designation','chapitre','tva']
 
 class ProduitSerializer(serializers.ModelSerializer):
     article = serializers.SlugRelatedField(queryset = Article.objects.all(), slug_field='designation')
@@ -47,6 +47,7 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
             article = Article.objects.get(designation=article_designation, chapitre=chapitre)
             produit = Produit.objects.get(designation=produit_designation, article=article)
 
+
             item_data['chapitre'] = chapitre
             item_data['article'] = article
             item_data['produit'] = produit
@@ -58,6 +59,9 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
             else:
                 # Handle serializer errors
                 pass
+
+        if bon_de_commande.items.exists():
+            bon_de_commande.tva = bon_de_commande.items.first().article.tva
 
         montant_global = sum(item.prix_unitaire * item.quantite for item in bon_de_commande.items.all())
         bon_de_commande.montant_global = montant_global
@@ -106,6 +110,11 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
                     quantite=item_data.get('quantite'),
                 )
                 instance.items.add(item5)  
+
+        # Calculate tva based on the first item's associated article's tva
+        if instance.items.exists():
+            instance.tva = instance.items.first().article.tva
+
         # Recalculate montant_global
         montant_global = sum(item.prix_unitaire * item.quantite for item in instance.items.all())
         instance.montant_global = montant_global
