@@ -9,6 +9,7 @@ class Chapitre(models.Model):
 class Article(models.Model):
     designation = models.CharField(max_length=255,unique=True)
     chapitre = models.ForeignKey(Chapitre, related_name='articles', on_delete=models.CASCADE)
+    tva = models.DecimalField(max_digits=10, decimal_places=2, default=19)
 
     def __str__(self):
         return self.designation
@@ -26,7 +27,7 @@ class Item(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
     prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)
     quantite = models.PositiveIntegerField()
-    montant = models.DecimalField(max_digits=10, decimal_places=2)
+    montant = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
 
     def save(self, *args, **kwargs):
         # Calculate the amount
@@ -38,9 +39,9 @@ class Item(models.Model):
 
 class BonDeCommande(models.Model):
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
-    items = models.ForeignKey(Item,on_delete=models.SET_NULL,null=True)   
-    tva = models.DecimalField(max_digits=10, decimal_places=2)
-    montant_global = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    items = models.ManyToManyField(Item)  # Change ForeignKey to ManyToManyField
+    tva = models.DecimalField(max_digits=10, decimal_places=2, null=True,blank=True)
+    montant_global = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
     date = models.DateField(auto_now_add=True)
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -49,10 +50,44 @@ class BonDeCommande(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
 
-    # def save(self, *args, **kwargs):
-    #     # Calculate the total amount including VAT
-    #     self.montant_global = sum(item.montant for item in self.items.all()) + (sum(item.montant for item in self.items.all()) * self.tva / 100)
-    #     super().save(*args, **kwargs)
+    
 
     def __str__(self):
         return f"Commande {self.id} - {self.fournisseur} - {self.date}"
+
+class BonDeReception(models.Model):
+    bon_de_commande = models.ForeignKey(BonDeCommande, on_delete=models.CASCADE, related_name='receipts')
+    date = models.DateField(auto_now_add=True)
+    
+
+    def __str__(self):
+        return f"Bon de réception {self.id} - {self.bon_de_commande}"
+
+class BonDeReceptionItem(models.Model):
+    bon_de_reception = models.ForeignKey(BonDeReception, on_delete=models.CASCADE, related_name='items')
+    # item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    nom_produit=models.CharField(max_length=255)
+    quantite_commandee = models.PositiveIntegerField()
+    quantite_livree = models.PositiveIntegerField()
+    reste_a_livrer = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.reste_a_livrer = self.quantite_commandee - self.quantite_livree
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.item} - Commandée: {self.quantite_commandee} - Livrée: {self.quantite_livree}"
+    
+
+# class ItemReceived(models.Model):
+#     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+#     # bon_de_reception = models.ForeignKey(BonDeReception, on_delete=models.CASCADE, related_name='items_received')
+#     quantite_livree = models.PositiveIntegerField()
+#     reste_a_livrer = models.PositiveIntegerField(default=0)  # Automatically calculated based on the quantity ordered
+
+#     def save(self, *args, **kwargs):
+#             self.reste_a_livrer = self.item.quantite - self.quantite_livree
+#             super().save(*args, **kwargs)
+
+
+

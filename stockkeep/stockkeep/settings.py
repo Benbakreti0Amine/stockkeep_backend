@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'role',
     'drf_yasg',
     'corsheaders',
-    'fournisseur',
+    'fournisseur',    
     'Service_Achat',
 
 ]
