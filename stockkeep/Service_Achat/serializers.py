@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Article, BonDeCommande, Chapitre, Item, Produit
+from fournisseur.models import Fournisseur
 
 class ChapitreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,6 +29,7 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ['id','chapitre', 'article', 'produit', 'prix_unitaire', 'quantite', 'montant']
 
 class BonDeCommandeSerializer(serializers.ModelSerializer):
+    fournisseur = serializers.SlugRelatedField(queryset = Fournisseur.objects.all(), slug_field='raison_sociale')
     items = ItemSerializer(many=True)
 
     class Meta:

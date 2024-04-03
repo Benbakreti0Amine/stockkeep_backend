@@ -14,5 +14,6 @@ urlpatterns = [
     path('Chapitre/listcreate/',views.ListCreateChapitre.as_view(), name='listcreateChapitre'),
     path('Chapitre/rud/<int:pk>/',views.RetrieveUpdateDeleteChapitre.as_view(), name='deleteChapitre'),
     path('bondecommande/listcreate/',views.BonDeCommandeCreateView.as_view(), name='bondecommande'),
-    path('bondecommande/rud/<int:pk>/',views.BonDeCommandeRUDView.as_view(), name='bondecommande'),
+    path('bondecommande/rud/<int:pk>/',views.BonDeCommandeRUDView.as_view(), name='bondecommandeid'),
+    path('bondecommande/<int:bon_de_commande_id>/pdf/', views.GeneratePDFView.as_view(), name='generate_pdf'),
 ] + router.urls
