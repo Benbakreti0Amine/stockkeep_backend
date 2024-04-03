@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Article, BonDeCommande, BonDeReception, BonDeReceptionItem, Chapitre, Item, Produit
+from .models import Article, BonDeCommande, Chapitre, Item, Produit
 
 class ChapitreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -69,40 +69,6 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
 
         return bon_de_commande
 
-class BonDeReceptionItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BonDeReceptionItem
-        fields = ['nom_produit', 'quantite_commandee', 'quantite_livree','reste_a_livrer']
-
-class BonDeReceptionSerializer(serializers.ModelSerializer):
-    items = BonDeReceptionItemSerializer(many=True, read_only=True)  # Champ de relation imbriquée
-
-    class Meta:
-        model = BonDeReception
-        fields = ['id', 'bon_de_commande', 'date', 'items']
-
-
-
-
-
-# class ItemReceivedSerializer(serializers.ModelSerializer):
-#     item = ItemSerializer()
-#     class Meta:
-#         model = ItemReceived
-#         fields = ['id','item','quantite_livree','reste_a_livrer']
-    
-    
-
-# class BonDeReceptionSerializer(serializers.ModelSerializer):
-#     # bon_de_commande = BonDeCommandeSerializer()
-#     bon_de_commande = serializers.SlugRelatedField(queryset = Chapitre.objects.all(), slug_field='id')
-#     class Meta:
-#         model = BonDeCommande
-#         fields = ['id','bon_de_commande']
-
-#     def create(self, validated_data):
-#         items_data = validated_data.pop('items')
-        
 
 
 

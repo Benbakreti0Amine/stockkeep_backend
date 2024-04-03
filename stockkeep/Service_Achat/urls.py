@@ -15,5 +15,4 @@ urlpatterns = [
     path('Chapitre/rud/<int:pk>/',views.RetrieveUpdateDeleteChapitre.as_view(), name='deleteChapitre'),
     path('bondecommande/listcreate/',views.BonDeCommandeCreateView.as_view(), name='bondecommande'),
     path('bondecommande/rud/<int:pk>/',views.BonDeCommandeRUDView.as_view(), name='bondecommande'),
-    path('generate-receipt/', views.GenerateReceipt.as_view(), name='generate_receipt'),
 ] + router.urls
