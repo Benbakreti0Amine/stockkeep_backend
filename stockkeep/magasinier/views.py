@@ -9,9 +9,7 @@ from Service_Achat.models import BonDeCommande
 
 from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
-
-
-
+from rest_framework import generics
 
 class GenerateReceipt(APIView):
     def post(self, request):
@@ -43,3 +41,12 @@ class GenerateReceipt(APIView):
         serializer = BonDeReceptionSerializer(bon_de_reception)
         print(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+class BonDeReceptionListView(generics.ListAPIView):
+    queryset = BonDeReception.objects.all()
+    serializer_class = BonDeReceptionSerializer
+    
+class BonDeReceptionRUDView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = BonDeReception.objects.all()
+    serializer_class = BonDeReceptionSerializer
