@@ -52,6 +52,10 @@ class ListCreatePermission(generics.ListCreateAPIView):
     queryset = RolePermission.objects.all()
     serializer_class = RolePermissionSerializer
 
+class RetrieveUpdateDestroyPermission(generics.RetrieveUpdateDestroyAPIView):
+    queryset = RolePermission.objects.all()
+    serializer_class = RolePermissionSerializer
+
 class GetPermOfRole(APIView):
 
    def post(self, request):

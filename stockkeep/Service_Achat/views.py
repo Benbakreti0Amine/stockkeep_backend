@@ -7,7 +7,7 @@ from .serializers import BonDeCommandeSerializer, ChapitreSerializer, ProduitSer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets, status,views
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter,A4
 from django.http import FileResponse
 from reportlab.lib import colors 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -46,6 +46,28 @@ class BonDeCommandeRUDView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BonDeCommandeSerializer
 
 
+class ArticleProduitsAPIView(generics.ListAPIView):
+    serializer_class = ProduitSerializer
+
+    def get_queryset(self):
+        article_id = self.kwargs['article_id']
+        return Produit.objects.filter(article_id=article_id)
+    
+
+class ChapitreArticlesAPIView(generics.ListAPIView):
+    serializer_class = articleSerializer
+
+    def get_queryset(self):
+        chapitre_id = self.kwargs['chapitre_id']
+        return Article.objects.filter(chapitre_id=chapitre_id)
+    
+
+class ChapitreProduitsAPIView(generics.ListAPIView):
+    serializer_class = ProduitSerializer
+
+    def get_queryset(self):
+        chapitre_id = self.kwargs['chapitre_id']
+        return Produit.objects.filter(article__chapitre_id=chapitre_id)
 
 class ItemViewSet(viewsets.ViewSet):
     def create(self, request, bon_de_commande_id):
@@ -86,7 +108,7 @@ class GeneratePDFView(views.APIView):
 
         # Create a PDF document
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
 
         elements = []
 
@@ -94,7 +116,7 @@ class GeneratePDFView(views.APIView):
         styles = getSampleStyleSheet()
         bold_body_text_style = styles['BodyText']
         bold_body_text_style.fontName = 'Helvetica-Bold'
-        bold_body_text_style.fontSize = 14  # Increased font size
+        bold_body_text_style.fontSize = 10  # Increased font size
 
         title_text = f"<b>Bon de Commande N° {bon_de_commande.id} / Date : {bon_de_commande.date}</b>"
         ttite1_text = f"<b>MINISTERE DE L'ENSEIGNEMENT SUPERIEUR ET DE LA RECHERCHE SCIENTIFIQUE</b>"
@@ -156,20 +178,40 @@ class GeneratePDFView(views.APIView):
 
         # Add item information
         elements.append(Paragraph("Caractéristiques de la commande :", bold_body_text_style))
+        elements.append(Paragraph(f"<b>Chapitre :</b> {bon_de_commande.items.first().chapitre} ", title_style))
+        elements.append(Paragraph(f"<strong>Article :</strong> {bon_de_commande.items.first().article} ", title_style))
         elements.append(Paragraph(" ", bold_body_text_style))
-        item_data = [["chapitre","article","Designation", "Prix Unitaire", "Quantite", "Montant"]]
+        item_data = [["id","Designation", "Prix Unitaire", "Quantite", "Montant"]]
         for item in items:
-            item_data.append([item.chapitre,item.article, item.produit, str(item.prix_unitaire), str(item.quantite), str(item.montant)])
+            item_data.append([str(item.produit.id), item.produit.designation, str(item.prix_unitaire), str(item.quantite), str(item.montant)])
+        # Define styles
+        s = getSampleStyleSheet()["BodyText"]
+        s.textColor = 'black'
+        s.wordWrap = 'CJK'
 
-        items_table = Table(item_data)
-        items_table.setStyle(TableStyle([('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                                   ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0DC1DC')),
-                                   ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                                   ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                                   ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
-                                   ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
-                                   ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-                                   ('TOPPADDING', (0, 0), (-1, -1), 5)]))
+        s2 = getSampleStyleSheet()["BodyText"]
+        s2.fontName = 'Helvetica-Bold'
+        s2.wordWrap='CJK'
+
+        print(item_data)
+
+        # Create data with styles
+        data2 = [
+            [Paragraph(cell, s2) if row_index == 0 else Paragraph(cell, s) for cell in row]
+            for row_index, row in enumerate(item_data)
+        ]
+        items_table = Table(data2,colWidths=[30,250,80,60,60])
+        items_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0DC1DC')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+            ('WORDWRAP', (0, 0), (-1, -1), 'WORDWRAP'),  # Adjust right padding
+        ]))
+
+
         elements.append(items_table)
 
         # Calculate the TOTAL TTC
@@ -209,5 +251,4 @@ class GeneratePDFView(views.APIView):
 
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename=f'bondecommande_{bon_de_commande_id}.pdf')
-    
     

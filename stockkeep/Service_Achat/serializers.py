@@ -11,13 +11,13 @@ class articleSerializer(serializers.ModelSerializer):
     chapitre = serializers.SlugRelatedField(queryset = Chapitre.objects.all(), slug_field='libelle')
     class Meta:
         model = Article
-        fields = ['designation','chapitre','tva']
+        fields = ['id','designation','chapitre','tva']
 
 class ProduitSerializer(serializers.ModelSerializer):
     article = serializers.SlugRelatedField(queryset = Article.objects.all(), slug_field='designation')
     class Meta:
         model = Produit
-        fields = ['designation','article']
+        fields = ['id','designation','article']
 
 
 class ItemSerializer(serializers.ModelSerializer):
