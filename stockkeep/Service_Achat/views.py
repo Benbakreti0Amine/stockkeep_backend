@@ -4,7 +4,7 @@ from rest_framework import generics
 from io import BytesIO
 from .models import Article, BonDeCommande, Chapitre, Item, Produit
 from .serializers import BonDeCommandeSerializer, ChapitreSerializer, ProduitSerializer, articleSerializer,ItemSerializer
-from rest_framework.views import APIView
+
 from rest_framework.response import Response
 from rest_framework import viewsets, status,views
 from reportlab.lib.pagesizes import letter,A4

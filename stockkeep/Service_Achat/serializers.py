@@ -71,58 +71,60 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
 
         return bon_de_commande
 
-    def update(self, instance, validated_data):
-        items_data = validated_data.pop('items')
-        instance.fournisseur = validated_data.get('fournisseur', instance.fournisseur)
-        instance.tva = validated_data.get('tva', instance.tva)
-        instance.date = validated_data.get('date', instance.date)
-        instance.status = validated_data.get('status', instance.status)
+
+
+
+# def update(self, instance, validated_data):
+#         items_data = validated_data.pop('items')
+#         instance.fournisseur = validated_data.get('fournisseur', instance.fournisseur)
+#         instance.tva = validated_data.get('tva', instance.tva)
+#         instance.date = validated_data.get('date', instance.date)
+#         instance.status = validated_data.get('status', instance.status)
         
         
-        instance.items.clear()
-        # Update or create items
-        for item_data in items_data:
-            item_id = item_data.get('id', None)
-            if item_id:
-                item = Item.objects.get(id=item_id)
-                chapitre_libelle = item_data['chapitre'].libelle
-                article_designation = item_data['article'].designation
-                produit_designation = item_data['produit'].designation
+#         instance.items.clear()
+#         # Update or create items
+#         for item_data in items_data:
+#             item_id = item_data.get('id', None)
+#             if item_id:
+#                 item = Item.objects.get(id=item_id)
+#                 chapitre_libelle = item_data['chapitre'].libelle
+#                 article_designation = item_data['article'].designation
+#                 produit_designation = item_data['produit'].designation
 
 
-                item.chapitre = Chapitre.objects.get(libelle=chapitre_libelle)
-                item.article = Article.objects.get(designation=article_designation, chapitre=item.chapitre)
-                item.produit = Produit.objects.get(designation=produit_designation, article=item.article)
-                item.prix_unitaire = item_data.get('prix_unitaire', item.prix_unitaire)
-                item.quantite = item_data.get('quantite', item.quantite)
-                item.montant = item_data.get('montant', item.montant)
-                item.save()
-                instance.items.add(item)
-            else:
-                chapitre_libelle = item_data['chapitre'].libelle
-                article_designation = item_data['article'].designation
-                produit_designation = item_data['produit'].designation
+#                 item.chapitre = Chapitre.objects.get(libelle=chapitre_libelle)
+#                 item.article = Article.objects.get(designation=article_designation, chapitre=item.chapitre)
+#                 item.produit = Produit.objects.get(designation=produit_designation, article=item.article)
+#                 item.prix_unitaire = item_data.get('prix_unitaire', item.prix_unitaire)
+#                 item.quantite = item_data.get('quantite', item.quantite)
+#                 item.montant = item_data.get('montant', item.montant)
+#                 item.save()
+#                 instance.items.add(item)
+#             else:
+#                 chapitre_libelle = item_data['chapitre'].libelle
+#                 article_designation = item_data['article'].designation
+#                 produit_designation = item_data['produit'].designation
 
 
-                item5 = Item.objects.create(
-                    chapitre=Chapitre.objects.get(libelle=chapitre_libelle),
-                    article=Article.objects.get(designation=article_designation),
-                    produit=Produit.objects.get(designation=produit_designation),
-                    prix_unitaire=item_data.get('prix_unitaire'),
-                    quantite=item_data.get('quantite'),
-                )
-                instance.items.add(item5)  
+#                 item5 = Item.objects.create(
+#                     chapitre=Chapitre.objects.get(libelle=chapitre_libelle),
+#                     article=Article.objects.get(designation=article_designation),
+#                     produit=Produit.objects.get(designation=produit_designation),
+#                     prix_unitaire=item_data.get('prix_unitaire'),
+#                     quantite=item_data.get('quantite'),
+#                 )
+#                 instance.items.add(item5)  
 
-        # Calculate tva based on the first item's associated article's tva
-        if instance.items.exists():
-            instance.tva = instance.items.first().article.tva
+#         # Calculate tva based on the first item's associated article's tva
+#         if instance.items.exists():
+#             instance.tva = instance.items.first().article.tva
 
-        # Recalculate montant_global
-        montant_global = sum(item.prix_unitaire * item.quantite for item in instance.items.all())
-        instance.montant_global = montant_global
-        instance.save()
+#         # Recalculate montant_global
+#         montant_global = sum(item.prix_unitaire * item.quantite for item in instance.items.all())
+#         instance.montant_global = montant_global
+#         instance.save()
 
-        print("\nUpdated montant_global:", instance.montant_global)
+#         print("\nUpdated montant_global:", instance.montant_global)
 
-        return instance
-
+#         return instance

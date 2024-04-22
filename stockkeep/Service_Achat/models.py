@@ -54,3 +54,17 @@ class BonDeCommande(models.Model):
 
     def __str__(self):
         return f"Commande {self.id} - {self.fournisseur} - {self.date}"
+
+
+# class ItemReceived(models.Model):
+#     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+#     # bon_de_reception = models.ForeignKey(BonDeReception, on_delete=models.CASCADE, related_name='items_received')
+#     quantite_livree = models.PositiveIntegerField()
+#     reste_a_livrer = models.PositiveIntegerField(default=0)  # Automatically calculated based on the quantity ordered
+
+#     def save(self, *args, **kwargs):
+#             self.reste_a_livrer = self.item.quantite - self.quantite_livree
+#             super().save(*args, **kwargs)
+
+
+

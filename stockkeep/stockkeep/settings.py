@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'fournisseur',    
     'Service_Achat',
+    'magasinier',
 
 ]
 

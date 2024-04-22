@@ -47,5 +47,7 @@ urlpatterns = [
     path('role/', include('role.urls')),
     path('fournisseur/', include('fournisseur.urls')),
     path('service-achat/', include('Service_Achat.urls')),
+    path('magasinier/', include('magasinier.urls')),
+
 
 ]
