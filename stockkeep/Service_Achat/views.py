@@ -188,10 +188,12 @@ class GeneratePDFView(views.APIView):
         s = getSampleStyleSheet()["BodyText"]
         s.textColor = 'black'
         s.wordWrap = 'CJK'
+        s.fontSize = 9
 
         s2 = getSampleStyleSheet()["BodyText"]
         s2.fontName = 'Helvetica-Bold'
         s2.wordWrap='CJK'
+        s.fontSize = 9
 
         print(item_data)
 
@@ -200,6 +202,7 @@ class GeneratePDFView(views.APIView):
             [Paragraph(cell, s2) if row_index == 0 else Paragraph(cell, s) for cell in row]
             for row_index, row in enumerate(item_data)
         ]
+       
         items_table = Table(data2,colWidths=[30,250,80,60,60])
         items_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -229,7 +232,7 @@ class GeneratePDFView(views.APIView):
         
         # Add total information aligned to the right
         elements.append(Paragraph(f"TOTAL HT: {montant_global}", right_aligned_style))
-        elements.append(Paragraph(f"TVA: {tva}", right_aligned_style))
+        elements.append(Paragraph(f"TVA: {int(tva)} %", right_aligned_style))
         elements.append(Paragraph(f"TOTAL TTC: {total_ttc}", right_aligned_style))
         elements.append(Paragraph("", bold_body_text_style))
 
@@ -240,7 +243,7 @@ class GeneratePDFView(views.APIView):
 
         custom_style = ParagraphStyle(
         name='CustomStyle',
-        fontSize=12
+        fontSize=10
         )
         elements.append(Paragraph( total_ttc_text, custom_style ))
 
