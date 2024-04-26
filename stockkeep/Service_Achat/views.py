@@ -21,9 +21,37 @@ class RetrieveUpdateDeletearticle(generics.RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.all()
     serializer_class = articleSerializer
 
+    def perform_destroy(self, instance):
+        # Delete associated products if any
+        produits = instance.produits.all()
+        for produit in produits:
+            if not produit.articles.exists():
+                produit.delete()
+        # Call the superclass' perform_destroy to delete the article
+        super().perform_destroy(instance)
+
 class ListCreateProduit(generics.ListCreateAPIView):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        quantite_en_security = serializer.validated_data.get('quantite_en_security')
+        quantite_en_stock = serializer.validated_data.get('quantite_en_stock')
+        print(quantite_en_security)
+        
+        if quantite_en_security > quantite_en_stock:       
+            return Response({"error": "Quantity in security cannot be greater than quantity in stock."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+            
+
+
+        
 class RetrieveUpdateDeleteProduit(generics.RetrieveUpdateDestroyAPIView):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer

@@ -16,10 +16,14 @@ class Article(models.Model):
 
 class Produit(models.Model):
     designation = models.CharField(max_length=255,unique=True)
-    article = models.ForeignKey(Article, related_name='produits', on_delete=models.CASCADE)
+    articles = models.ManyToManyField(Article, related_name='produits')
+    quantite_en_stock = models.IntegerField()
+    quantite_en_security = models.IntegerField()
+
 
     def __str__(self):
         return self.designation
+    
 
 class Item(models.Model):
     chapitre = models.ForeignKey(Chapitre, on_delete=models.CASCADE)

@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from fournisseur.models import Fournisseur
 from .models import Article, BonDeCommande, Chapitre, Item, Produit
 
 class ChapitreSerializer(serializers.ModelSerializer):
@@ -10,13 +12,14 @@ class articleSerializer(serializers.ModelSerializer):
     chapitre = serializers.SlugRelatedField(queryset = Chapitre.objects.all(), slug_field='libelle')
     class Meta:
         model = Article
-        fields = ['designation','chapitre','tva']
+        fields = ['id','designation','chapitre','tva']
 
 class ProduitSerializer(serializers.ModelSerializer):
-    article = serializers.SlugRelatedField(queryset = Article.objects.all(), slug_field='designation')
+    articles = serializers.SlugRelatedField(many=True,queryset = Article.objects.all(), slug_field='designation')
     class Meta:
         model = Produit
-        fields = ['designation','article']
+        fields = ['id','designation','articles','quantite_en_security','quantite_en_stock']
+    
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -28,6 +31,7 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ['id','chapitre', 'article', 'produit', 'prix_unitaire', 'quantite', 'montant']
 
 class BonDeCommandeSerializer(serializers.ModelSerializer):
+    fournisseur = serializers.SlugRelatedField(queryset = Fournisseur.objects.all(), slug_field='raison_sociale')
     items = ItemSerializer(many=True)
 
     class Meta:
@@ -45,7 +49,7 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
 
             chapitre = Chapitre.objects.get(libelle=chapitre_libelle)
             article = Article.objects.get(designation=article_designation, chapitre=chapitre)
-            produit = Produit.objects.get(designation=produit_designation, article=article)
+            produit = Produit.objects.get(designation=produit_designation, articles=article)
 
 
             item_data['chapitre'] = chapitre
