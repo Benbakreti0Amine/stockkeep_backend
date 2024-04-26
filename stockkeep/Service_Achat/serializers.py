@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Article, BonDeCommande, Chapitre, Item, Produit
+
 from fournisseur.models import Fournisseur
+from .models import Article, BonDeCommande, Chapitre, Item, Produit
 
 class ChapitreSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,10 +15,11 @@ class articleSerializer(serializers.ModelSerializer):
         fields = ['id','designation','chapitre','tva']
 
 class ProduitSerializer(serializers.ModelSerializer):
-    article = serializers.SlugRelatedField(queryset = Article.objects.all(), slug_field='designation')
+    articles = serializers.SlugRelatedField(many=True,queryset = Article.objects.all(), slug_field='designation')
     class Meta:
         model = Produit
-        fields = ['id','designation','article']
+        fields = ['id','designation','articles','quantite_en_security','quantite_en_stock']
+    
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -47,7 +49,7 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
 
             chapitre = Chapitre.objects.get(libelle=chapitre_libelle)
             article = Article.objects.get(designation=article_designation, chapitre=chapitre)
-            produit = Produit.objects.get(designation=produit_designation, article=article)
+            produit = Produit.objects.get(designation=produit_designation, articles=article)
 
 
             item_data['chapitre'] = chapitre
@@ -127,4 +129,4 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
 
 #         print("\nUpdated montant_global:", instance.montant_global)
 
-#         return instance
+#         return instance       

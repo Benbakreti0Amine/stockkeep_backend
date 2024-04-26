@@ -10,11 +10,10 @@ from rest_framework import viewsets, status,views
 from reportlab.lib.pagesizes import letter,A4
 from django.http import FileResponse
 from reportlab.lib import colors 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.styles import ParagraphStyle,getSampleStyleSheet
 from num2words import num2words
-import json
 
 class ListCreateChapitre(generics.ListCreateAPIView):
     queryset = Chapitre.objects.all()
@@ -26,13 +25,38 @@ class RetrieveUpdateDeleteChapitre(generics.RetrieveUpdateDestroyAPIView):
 class ListCreatearticle(generics.ListCreateAPIView):
     queryset = Article.objects.all()
     serializer_class = articleSerializer
+
 class RetrieveUpdateDeletearticle(generics.RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.all()
     serializer_class = articleSerializer
 
+    def perform_destroy(self, instance):
+        # Delete associated products if any
+        produits = instance.produits.all()
+        for produit in produits:
+            if not produit.articles.exists():
+                produit.delete()
+        # Call the superclass' perform_destroy to delete the article
+        super().perform_destroy(instance)
+
 class ListCreateProduit(generics.ListCreateAPIView):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        quantite_en_security = serializer.validated_data.get('quantite_en_security')
+        quantite_en_stock = serializer.validated_data.get('quantite_en_stock')
+        print(quantite_en_security)
+        
+        if quantite_en_security > quantite_en_stock:       
+            return Response({"error": "Quantity in security cannot be greater than quantity in stock."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 class RetrieveUpdateDeleteProduit(generics.RetrieveUpdateDestroyAPIView):
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
