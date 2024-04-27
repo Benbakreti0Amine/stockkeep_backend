@@ -15,14 +15,14 @@ class BonDeReceptionItem(models.Model):
     bon_de_reception = models.ForeignKey(BonDeReception, on_delete=models.CASCADE, related_name='items')
     # item = models.ForeignKey(Item, on_delete=models.CASCADE)
     nom_produit=models.CharField(max_length=255)
-    quantite_livree = models.PositiveIntegerField()
-    quantite_commandee=models.PositiveIntegerField()
-    reste_a_livrer = models.PositiveIntegerField()
+    quantite_commandee = models.PositiveIntegerField(null=True)
+    quantite_livree = models.PositiveIntegerField(null=True)
+    reste_a_livrer = models.PositiveIntegerField(null=True)
 
     def save(self, *args, **kwargs):
         self.reste_a_livrer = self.quantite_commandee - self.quantite_livree
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.item} - reste a livrer: {self.quantite_commandee} - Livrée: {self.quantite_livree}"
+        return f" - Commandée: {self.quantite_commandee} - Livrée: {self.quantite_livree}"
     

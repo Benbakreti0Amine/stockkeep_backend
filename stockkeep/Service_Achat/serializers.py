@@ -129,4 +129,4 @@ class BonDeCommandeSerializer(serializers.ModelSerializer):
 
 #         print("\nUpdated montant_global:", instance.montant_global)
 
-#         return instance
+#         return instance       
