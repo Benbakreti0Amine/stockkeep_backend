@@ -1,7 +1,7 @@
 from role.models import Role
 from structure.models import Structure
 from rest_framework import serializers
-from .models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
+from consommateur.models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
 from users.models import User
 from Service_Achat.models import Produit
 
@@ -94,13 +94,11 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
 
         items_data = validated_data.pop('items')
-
         print(items_data)
-
         instance = super().update(instance, validated_data)
+        instance.status = "directeur"
         for item_data in items_data:
             produit = item_data.get('produit')
-            
             print(produit)
             quantite_accorde = item_data.get('quantite_accorde')
             print(quantite_accorde)
@@ -109,6 +107,6 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
                 print(items)
                 for item in items:
                     item.quantite_accorde = quantite_accorde
-                    item.save()            
- 
+                    item.save()
+        instance.save()
         return instance    
