@@ -1,4 +1,5 @@
 
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 
 from rest_framework.response import Response
@@ -8,7 +9,8 @@ from Service_Achat.models import BonDeCommande
 from Service_Achat.serializers import BonDeCommandeSerializer
 
 from Service_Achat.serializers import BonDeCommandeSerializer
-from .serializers import BonDeReceptionSerializer
+from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
+from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer
 from .models import BonDeReception, BonDeReceptionItem
 from rest_framework import generics
 
@@ -63,3 +65,88 @@ class BonDeReceptionListView(generics.ListAPIView):
 class BonDeReceptionRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BonDeReception.objects.all()
     serializer_class = BonDeReceptionSerializer
+
+    ############################################
+    ############################################
+
+
+# class BonDeSortieCreateView(APIView):
+#     def post(self, request, *args, **kwargs):
+#         bon_de_commande_interne_id = request.data.get('bon_de_commande_interne_id')
+#         observation = request.data.get('observation', '')
+#         items_data = request.data.get('items', [])
+
+#         # Implement your logic to validate bon_de_commande_interne_id and items_data
+
+#         bon_de_sortie_data = {
+#             'bon_de_commande_interne': bon_de_commande_interne_id,
+#             'observation': observation,
+#             'items': items_data
+#         }
+
+#         serializer = BonDeSortieSerializer(data=bon_de_sortie_data)
+#         if serializer.is_valid():
+#             bon_de_sortie = serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BonDeSortieCreateView(APIView):
+    def post(self, request, *args, **kwargs):
+        bon_de_commande_interne_id = request.data.get('bon_de_commande_interne_id')
+        items_data = request.data.get('items', [])
+
+        bon_de_commande_interne = get_object_or_404(BonDeCommandeInterne, pk=bon_de_commande_interne_id)
+
+
+        bon_de_sortie_data = {
+            'bon_de_commande_interne': bon_de_commande_interne_id,
+            'items': []
+        }
+
+        for item_data in items_data:
+            bon_de_commande_interne_item_id = item_data.get('bon_de_commande_interne_item')
+            quantite_accorde = item_data.get('quantite_accorde')
+            observation_item = item_data.get('observation_item', '')
+
+            # Retrieve the BonDeCommandeInterneItem instance
+            print(bon_de_commande_interne_item_id)
+            bon_de_commande_interne_item = get_object_or_404(BonDeCommandeInterneItem, pk=bon_de_commande_interne_item_id)
+            print('11111111111111111111111111113333333333333')
+ 
+            # Create the item data for BonDeSortie
+            item_serializer = BonDeSortieItemSerializer(data={
+                'bon_de_commande_interne_item': bon_de_commande_interne_item_id,
+                'quantite_accorde': quantite_accorde,
+                'observation': observation_item
+            })
+            print(item_serializer.is_valid())
+            print('//////////////////////////yy')
+            print(bon_de_commande_interne_item_id)
+            print(quantite_accorde)
+            print(item_serializer)
+
+
+            if item_serializer.is_valid():
+                bon_de_sortie_data['items'].append(item_serializer.validated_data)
+                print('/////////////////////////')
+                print(item_serializer.validated_data)
+            else:
+                return Response(item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        print('/////////////////////////')
+        serializer = BonDeSortieSerializer(data=bon_de_sortie_data)
+        print('123')
+        print(bon_de_sortie_data)
+        print('/////////////////////////////////////////')
+        print('123')
+        print(serializer.is_valid())
+        print('/////////////////////////////////////////')
+        print(serializer.data)
+
+
+        if serializer.is_valid():      
+            print(serializer.data)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

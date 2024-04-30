@@ -1,5 +1,6 @@
 from django.db import models
 from Service_Achat.models import BonDeCommande
+from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 
 
 
@@ -25,4 +26,21 @@ class BonDeReceptionItem(models.Model):
 
     def __str__(self):
         return f" - Commandée: {self.quantite_commandee} - Livrée: {self.quantite_livree}"
+
+
+#####################################################
+#####################################################
+#####################################################
+
+
+class BonDeSortie(models.Model):
+    bon_de_commande_interne = models.ForeignKey(BonDeCommandeInterne, on_delete=models.CASCADE)
     
+
+
+class BonDeSortieItem(models.Model):
+    bon_de_sortie = models.ForeignKey(BonDeSortie, related_name='items', on_delete=models.CASCADE)
+    bon_de_commande_interne_item = models.ForeignKey(BonDeCommandeInterneItem,related_name='bondesortie_item', on_delete=models.CASCADE)
+    quantite_accorde=models.IntegerField()
+    observation = models.TextField(blank=True)
+

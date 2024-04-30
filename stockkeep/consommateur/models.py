@@ -1,12 +1,12 @@
 from django.db import models
 from users.models import User
 from structure.models import Structure
+from Service_Achat.models import Produit
+
+from django.contrib.auth.models import  BaseUserManager
 # Create your models here.
+class MyUserManager(BaseUserManager):
 
-class Consommateur(User):
-    structure = models.ForeignKey(Structure,on_delete=models.SET_NULL,null=True)
-
-    
     def create_user(self, username, email,first_name,last_name, password, **kwags):
         if not email:
             raise ValueError('Users must have an email address')
@@ -21,9 +21,41 @@ class Consommateur(User):
             username=username,
             email=self.normalize_email(email),
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
         )
+
         user.is_active  = True
         user.set_password(password)
         user.save(using=self._db)
         return user
+
+class Consommateur(User):
+    structure = models.ForeignKey(Structure,on_delete=models.SET_NULL,null=True,related_name='consommateurs')
+
+
+class BonDeCommandeInterneItem(models.Model):
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    quantite_demandee = models.PositiveIntegerField(null=True)
+    quantite_accorde = models.PositiveIntegerField(null=True)
+
+    def __str__(self):
+        return f"{self.produit} - {self.quantite_demandee}"
+
+class BonDeCommandeInterne(models.Model):
+    Consommateur_id = models.ForeignKey(Consommateur, on_delete=models.CASCADE, related_name='bonDeiommandeinternes')
+    date = models.DateField(auto_now_add=True)
+    STATUS_CHOICES = (
+        ('transfert', 'Transfert'),
+        ('responsable', 'Responsable'),
+        ('directeur', 'Directeur'),
+        ('validate', 'Validate'),
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    items = models.ManyToManyField(BonDeCommandeInterneItem)
+
+    def __str__(self):
+        return f"Commande {self.id} - {self.Consommateur_id} - {self.date}"
+
+
+    
+    

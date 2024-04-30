@@ -205,9 +205,9 @@ class GeneratePDFView(views.APIView):
         elements.append(Paragraph(f"<b>Chapitre :</b> {bon_de_commande.items.first().chapitre} ", title_style))
         elements.append(Paragraph(f"<strong>Article :</strong> {bon_de_commande.items.first().article} ", title_style))
         elements.append(Paragraph(" ", bold_body_text_style))
-        item_data = [["id","Designation", "Prix Unitaire", "Quantite", "Montant"]]
-        for item in items:
-            item_data.append([str(item.produit.id), item.produit.designation, str(item.prix_unitaire), str(item.quantite), str(item.montant)])
+        item_data = [["N°","Designation", "Prix Unitaire", "Quantite", "Montant"]]
+        for index, item in enumerate(items):
+            item_data.append([str(index+1), item.produit.designation, str(item.prix_unitaire), str(item.quantite), str(item.montant)])
         # Define styles
         s = getSampleStyleSheet()["BodyText"]
         s.textColor = 'black'
@@ -244,6 +244,7 @@ class GeneratePDFView(views.APIView):
         # Calculate the TOTAL TTC
         montant_global = bon_de_commande.montant_global
         tva = bon_de_commande.tva
+        total_tva = (montant_global * tva / 100)
         total_ttc = montant_global + (montant_global * tva / 100)
 
         # Add total information
@@ -256,7 +257,7 @@ class GeneratePDFView(views.APIView):
         
         # Add total information aligned to the right
         elements.append(Paragraph(f"TOTAL HT: {montant_global}", right_aligned_style))
-        elements.append(Paragraph(f"TVA: {int(tva)} %", right_aligned_style))
+        elements.append(Paragraph(f"TVA ({int(tva)} %) : {int(total_tva)} ", right_aligned_style))
         elements.append(Paragraph(f"TOTAL TTC: {total_ttc}", right_aligned_style))
         elements.append(Paragraph("", bold_body_text_style))
 
