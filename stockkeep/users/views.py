@@ -32,6 +32,17 @@ class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+class DeleteUsersWithNoObjects(APIView):
+    def delete(self, request):
+        # Get users with role 'consommateur' and no associated objects
+        users_to_delete = User.objects.filter(role__name='consommateur')
+
+        # Delete the users
+        deleted_count, _ = users_to_delete.delete()
+
+        # Return a response indicating the number of users deleted
+        return Response(data={"message": f"{deleted_count} users deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
         user = get_object_or_404(User, id=user_id)

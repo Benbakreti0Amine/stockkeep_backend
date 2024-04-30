@@ -18,7 +18,7 @@ class ProduitSerializer(serializers.ModelSerializer):
     articles = serializers.SlugRelatedField(many=True,queryset = Article.objects.all(), slug_field='designation')
     class Meta:
         model = Produit
-        fields = ['id','designation','articles','quantite_en_security','quantite_en_stock']
+        fields = ['id','designation','articles','quantite_en_security']
     
 
 
@@ -28,11 +28,12 @@ class ItemSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field='designation')
     class Meta:
         model = Item
-        fields = ['id','chapitre', 'article', 'produit', 'prix_unitaire', 'quantite', 'montant']
+        fields = ['id','chapitre', 'article', 'produit', 'prix_unitaire', 'quantite', 'montant','reste_a_livrer']
 
 class BonDeCommandeSerializer(serializers.ModelSerializer):
     fournisseur = serializers.SlugRelatedField(queryset = Fournisseur.objects.all(), slug_field='raison_sociale')
     items = ItemSerializer(many=True)
+    status = serializers.CharField(read_only=True)
 
     class Meta:
         model = BonDeCommande

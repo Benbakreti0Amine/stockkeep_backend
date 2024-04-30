@@ -1,21 +1,23 @@
+from django.shortcuts import get_object_or_404
+from io import BytesIO
 
 from rest_framework.views import APIView
-
 from rest_framework.response import Response
-from rest_framework import views, status
+from rest_framework import views, status,generics
 
 from Service_Achat.models import BonDeCommande
-from io import BytesIO
 from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
-from rest_framework import generics
-from reportlab.lib.pagesizes import letter,A4
+from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
+from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer
+from .models import BonDeReception, BonDeReceptionItem
+
+from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
 from reportlab.lib import colors 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.styles import ParagraphStyle,getSampleStyleSheet
-from num2words import num2words
+
 
 class GenerateReceipt(APIView):
     def post(self, request):
@@ -37,16 +39,16 @@ class GenerateReceipt(APIView):
 
         for item_data in items_data:
             nom_produit = item_data.get('nom_produit')
-            print(nom_produit)
+            # print(nom_produit)
             quantite_livree = item_data.get('quantite_livree')
             # Trouver l'objet Item correspondant dans le bon de commande
             items = bon_de_commande.items.filter(produit__designation=nom_produit)
             item = items.first()
-            print(items)
+            # print(items)
             if item:
                 # Check if it's the first reception for this product
                 reception = BonDeReceptionItem.objects.filter(nom_produit=nom_produit)
-                print(reception)
+                # print(reception)
                 first_reception = bon_de_reception_count == 0
 
                 if first_reception:
@@ -189,3 +191,69 @@ class GeneratePDFView(views.APIView):
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename=f'bondereception_{bon_de_reception_id}.pdf')
     
+    ############################################
+    ############################################
+
+
+
+class BonDeSortieCreateView(APIView):
+    def post(self, request, *args, **kwargs):
+        bon_de_commande_interne_id = request.data.get('bon_de_commande_interne')
+        items_data = request.data.get('items', [])
+
+        bon_de_commande_interne = get_object_or_404(BonDeCommandeInterne, pk=bon_de_commande_interne_id)
+
+
+        bon_de_sortie_data = {
+            'bon_de_commande_interne': bon_de_commande_interne_id,
+            'items': []
+        }
+
+        for item_data in items_data:
+            bon_de_commande_interne_item_id = item_data.get('bon_de_commande_interne_item')
+            quantite_accorde = item_data.get('quantite_accorde')
+            observation_item = item_data.get('observation')
+
+            # Retrieve the BonDeCommandeInterneItem instance
+            print(f" id bon de com inter",bon_de_commande_interne_item_id)
+            bon_de_commande_interne_item = get_object_or_404(BonDeCommandeInterneItem, pk=bon_de_commande_interne_item_id)
+            print('11111111111111111111111111113333333333333')
+ 
+            # Create the item data for BonDeSortie
+            item_serializer = BonDeSortieItemSerializer(data={
+                'bon_de_commande_interne_item': bon_de_commande_interne_item_id,
+                'quantite_accorde': quantite_accorde,
+                'observation': observation_item
+            })
+            print(item_serializer.is_valid())
+            print('//////////////////////////yy')
+            print(f" id bon de com inter item",bon_de_commande_interne_item_id)
+            print(quantite_accorde)
+            print(item_serializer.validated_data)
+
+
+            if item_serializer.is_valid():
+                bon_de_sortie_data['items'].append({
+                        'bon_de_commande_interne_item': bon_de_commande_interne_item_id,
+                        'quantite_accorde': quantite_accorde,
+                        'observation': observation_item})
+                print('/////////////////////////')
+                print(item_serializer.validated_data)
+            else:
+                return Response(item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        print('/////////////////////////')
+        serializer = BonDeSortieSerializer(data=bon_de_sortie_data)
+        print('123')
+        print(bon_de_sortie_data)
+        print('/////////////////////////////////////////')
+        print('123')
+        print(serializer.is_valid())
+        print('/////////////////////////////////////////')
+        print(serializer.validated_data)
+
+
+        if serializer.is_valid():      
+            bon_de_sortie = serializer.save()  # Save here
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

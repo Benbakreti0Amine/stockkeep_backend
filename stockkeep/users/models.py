@@ -6,7 +6,6 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 
 from role.models import Role
-
 class MyUserManager(BaseUserManager):
 
     def create_user(self, username, email,first_name,last_name, password, **kwags):

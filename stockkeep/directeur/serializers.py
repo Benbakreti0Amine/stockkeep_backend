@@ -62,41 +62,12 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
         model = BonDeCommandeInterne
         fields = ['id', 'Consommateur_id', 'items', 'status', 'date']
 
-    def create(self, validated_data):
-        items_data = validated_data.pop('items')
-        bon_de_commande = BonDeCommandeInterne.objects.create(**validated_data)
-
-        for item_data in items_data:
-
-            produit_designation = item_data.pop('produit')
-
-            produit = Produit.objects.get(designation=produit_designation)
-
-
-
-            item_data['produit'] = produit
-
-            item_serializer = BonDeCommandeInterneItemSerializer(data=item_data)
-            if item_serializer.is_valid():
-                item = item_serializer.save()
-                bon_de_commande.items.add(item)
-            else:
-                # Handle serializer errors
-                pass
-
-
-        bon_de_commande.save()
-
-        return bon_de_commande
-    
-
-
     def update(self, instance, validated_data):
 
         items_data = validated_data.pop('items')
         print(items_data)
         instance = super().update(instance, validated_data)
-        instance.status = "directeur"
+        instance.status = "Consulted by the director"
         for item_data in items_data:
             produit = item_data.get('produit')
             print(produit)
