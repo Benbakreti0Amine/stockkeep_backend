@@ -10,4 +10,5 @@ urlpatterns = [
     path('bondesortie/create/', views.BonDeSortieCreateView.as_view(), name='genererbondesortie'),
     path('bondesortie/list/', views.BonDeSortieListView.as_view(), name='genererbondesortie'),
     path('bondecommandeinterne/list/',views.BonDeCommandeInterneListView.as_view(), name='bonlist'),
+    path('bondesortie/<int:bon_de_sortie_id>/pdf/',views.GenerateBonDeSortiePDFView.as_view(), name='genererbondesortiebdf'),
 ] 

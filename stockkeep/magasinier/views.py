@@ -14,9 +14,11 @@ from .models import BonDeReception, BonDeReceptionItem,BonDeSortie
 from consommateur.serializers import BonDeCommandeInterneSerializer
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
+
 from reportlab.lib import colors 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
 from reportlab.lib.styles import ParagraphStyle,getSampleStyleSheet
+from reportlab.lib.units import inch
 
 
 class GenerateReceipt(APIView):
@@ -265,3 +267,146 @@ class BonDeSortieListView(generics.ListAPIView):
 class BonDeCommandeInterneListView(generics.ListAPIView):
     queryset = BonDeCommandeInterne.objects.all()
     serializer_class = BonDeCommandeInterneSerializer
+
+class GenerateBonDeSortiePDFView(views.APIView):
+     def get(self, request, bon_de_sortie_id, *args, **kwargs):
+
+        try:
+            bon_de_sortie = BonDeSortie.objects.get(id=bon_de_sortie_id)
+        except BonDeSortie.DoesNotExist:
+            return Response({'message': 'Bon de reception not found'}, status=404)
+
+        Consommateur_id = bon_de_sortie.bon_de_commande_interne.Consommateur_id
+        username = Consommateur_id.username
+        email = Consommateur_id.email
+
+        items = bon_de_sortie.items.all()
+
+        # Create a PDF document
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+        elements = []
+
+        # Define styles
+        styles = getSampleStyleSheet()
+        bold_body_text_style = styles['BodyText']
+        bold_body_text_style.fontName = 'Helvetica-Bold'
+        bold_body_text_style.fontSize = 10  # Increased font size
+
+        title_text = f"<b>Bon de sortie N° {bon_de_sortie.id} / Date : {bon_de_sortie.date}</b>"
+        title2_text = f"<b>Type : {bon_de_sortie.type}</b>"
+        ttite1_text = f"<b>MINISTERE DE L'ENSEIGNEMENT SUPERIEUR ET DE LA RECHERCHE SCIENTIFIQUE</b>"
+        title_style = ParagraphStyle(name='Title', fontSize=10, leading=20, alignment=1)  # Define paragraph style
+        title = Paragraph(title_text, style=title_style)
+        title1 = Paragraph(ttite1_text, style=title_style)
+        title2 = Paragraph(title2_text, style=title_style)
+        elements.append(title1)
+        elements.append(title)
+        elements.append(title2)
+
+        elements.append(Paragraph("", bold_body_text_style))
+
+        # Add line break between supplier information and item table
+        elements.append(Paragraph("Identification du cosommateur : ", bold_body_text_style))
+        elements.append(Paragraph(" ", bold_body_text_style))
+
+        client_data = [
+            ["Nom De Demandeur : ", username],
+            ["Email : ", email],
+        ]
+        client_table = Table(client_data, colWidths=[200, 200])
+        client_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        elements.append(client_table)
+
+        # Add item information
+        elements.append(Paragraph("Caractéristiques de la bon de sortie :", bold_body_text_style))
+        elements.append(Paragraph("", bold_body_text_style))
+        elements.append(Paragraph(f"<b>information sur la commande interne : N° </b> {bon_de_sortie.bon_de_commande_interne.id} ", title_style))
+        elements.append(Paragraph(" ", bold_body_text_style))
+        item_data = [["N°","Designation", "Quantite Accordé", "Observation", ]]
+        for index, item in enumerate(items):
+            item_produit = item.bon_de_commande_interne_item.produit.designation
+            item_data.append([str(index+1), item_produit, str(item.quantite_accorde), item.observation])
+        # Define styles
+        s = getSampleStyleSheet()["BodyText"]
+        s.textColor = 'black'
+        s.wordWrap = 'CJK'
+        s.fontSize = 9
+
+        s2 = getSampleStyleSheet()["BodyText"]
+        s2.fontName = 'Helvetica-Bold'
+        s2.wordWrap='CJK'
+        s.fontSize = 9
+
+        print(item_data)
+
+        # Create data with styles
+        data2 = [
+            [Paragraph(cell, s2) if row_index == 0 else Paragraph(cell, s) for cell in row]
+            for row_index, row in enumerate(item_data)
+        ]
+       
+        items_table = Table(data2,colWidths=[30,250,70,150])
+        items_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0DC1DC')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+            ('WORDWRAP', (0, 0), (-1, -1), 'WORDWRAP'),  # Adjust right padding
+        ]))
+
+
+        elements.append(items_table)
+
+
+        # Add total information
+        right_aligned_style = ParagraphStyle(
+            'RightAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=2
+        )
+        Middle_aligned_style = ParagraphStyle(
+            'MiddleAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=1
+        )
+        LEFT_aligned_style = ParagraphStyle(
+            'LeftAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=0
+        )
+
+        # Create paragraphs
+        paragraphs = [
+            Paragraph("LE MAGASINIER", right_aligned_style),
+            Paragraph("LE DIRECTEUR", Middle_aligned_style),
+            Paragraph("LE DEMANDEUR", LEFT_aligned_style)
+        ]
+
+        # Create a table with a single row and three columns
+        data = [paragraphs]
+        table = Table(data, colWidths=[4*inch, 4*inch, 4*inch])
+
+        # Add the table to elements
+        elements.append(table)
+
+
+        # Build the PDF document
+        doc.build(elements)
+
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename=f'bondereception_{bon_de_sortie_id}.pdf')
+
+
