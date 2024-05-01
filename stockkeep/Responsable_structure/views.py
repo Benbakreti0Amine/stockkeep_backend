@@ -8,3 +8,7 @@ from .serializers import BonDeCommandeInterneSerializer
 class BonDeCommandeInterneRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BonDeCommandeInterne.objects.all()
     serializer_class = BonDeCommandeInterneSerializer
+
+class BonDeCommandeInterneListView(generics.ListAPIView):
+    queryset = BonDeCommandeInterne.objects.all()
+    serializer_class = BonDeCommandeInterneSerializer

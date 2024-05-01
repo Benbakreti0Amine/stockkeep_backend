@@ -48,9 +48,14 @@ class BonDeCommandeInterne(models.Model):
         ('Created succesfully', 'Created succesfully'),
         ('Consulted by the responsable', 'Consulted by the responsable'),
         ('Consulted by the director', 'Consulted by the director'),
-        ('Validate', 'Validate'),
+        ('Delivered', 'Delivered'),
+    )
+    TYPE_CHOICES = (
+        ('Supply', 'Supply'),
+        ('Decharge', 'Decharge'),
     )
     status = models.CharField(max_length=40, choices=STATUS_CHOICES)
+    type = models.CharField(max_length=40, choices=TYPE_CHOICES)
     items = models.ManyToManyField(BonDeCommandeInterneItem)
 
     def __str__(self):

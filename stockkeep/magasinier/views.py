@@ -10,8 +10,8 @@ from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer
-from .models import BonDeReception, BonDeReceptionItem
-
+from .models import BonDeReception, BonDeReceptionItem,BonDeSortie
+from consommateur.serializers import BonDeCommandeInterneSerializer
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
 from reportlab.lib import colors 
@@ -217,7 +217,7 @@ class BonDeSortieCreateView(APIView):
             # Retrieve the BonDeCommandeInterneItem instance
             print(f" id bon de com inter",bon_de_commande_interne_item_id)
             bon_de_commande_interne_item = get_object_or_404(BonDeCommandeInterneItem, pk=bon_de_commande_interne_item_id)
-            print('11111111111111111111111111113333333333333')
+            print('etape1')
  
             # Create the item data for BonDeSortie
             item_serializer = BonDeSortieItemSerializer(data={
@@ -226,7 +226,7 @@ class BonDeSortieCreateView(APIView):
                 'observation': observation_item
             })
             print(item_serializer.is_valid())
-            print('//////////////////////////yy')
+            print('etape2')
             print(f" id bon de com inter item",bon_de_commande_interne_item_id)
             print(quantite_accorde)
             print(item_serializer.validated_data)
@@ -237,19 +237,19 @@ class BonDeSortieCreateView(APIView):
                         'bon_de_commande_interne_item': bon_de_commande_interne_item_id,
                         'quantite_accorde': quantite_accorde,
                         'observation': observation_item})
-                print('/////////////////////////')
+                print('etape3')
                 print(item_serializer.validated_data)
             else:
                 return Response(item_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        print('/////////////////////////')
+        print('etape4')
         serializer = BonDeSortieSerializer(data=bon_de_sortie_data)
-        print('123')
+
         print(bon_de_sortie_data)
-        print('/////////////////////////////////////////')
-        print('123')
+        print('etape5')
+
         print(serializer.is_valid())
-        print('/////////////////////////////////////////')
+        print('etape6')
         print(serializer.validated_data)
 
 
@@ -257,3 +257,11 @@ class BonDeSortieCreateView(APIView):
             bon_de_sortie = serializer.save()  # Save here
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class BonDeSortieListView(generics.ListAPIView):
+    queryset = BonDeSortie.objects.all()
+    serializer_class = BonDeSortieSerializer
+
+class BonDeCommandeInterneListView(generics.ListAPIView):
+    queryset = BonDeCommandeInterne.objects.all()
+    serializer_class = BonDeCommandeInterneSerializer

@@ -60,7 +60,7 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status', 'date']
+        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
 
     def update(self, instance, validated_data):
 

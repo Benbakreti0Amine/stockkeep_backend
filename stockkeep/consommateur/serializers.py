@@ -60,7 +60,7 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status', 'date']
+        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
         read_only_fields = ['status']  # Mark status field as read-only
 
     def create(self, validated_data):
@@ -86,23 +86,20 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
 
 
     def update(self, instance, validated_data):
-
-        items_data = validated_data.pop('items')
-
-        print(items_data)
+        items_data = validated_data.pop('items', [])  
 
         instance = super().update(instance, validated_data)
+
         for item_data in items_data:
             produit = item_data.get('produit')
-            
-            print(produit)
-            quantite_accorde = item_data.get('quantite_accorde')
-            print(quantite_accorde)
-            if produit and quantite_accorde is not None:
-                items = instance.items.filter(produit=produit)
-                print(items)
-                for item in items:
-                    item.quantite_accorde = quantite_accorde
-                    item.save()            
- 
-        return instance    
+            quantite_demandee = item_data.get('quantite_demandee')
+
+            if produit and quantite_demandee is not None:
+
+                item, created = instance.items.get_or_create(produit=produit, defaults={'quantite_demandee': 0})
+
+
+                item.quantite_demandee = quantite_demandee
+                item.save()
+
+        return instance   
