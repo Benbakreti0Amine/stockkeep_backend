@@ -49,14 +49,14 @@ class UserSerializer(serializers.ModelSerializer):
         return user
     
 
-class BonDeCommandeInterneItemSerializer(serializers.ModelSerializer):
+class BonDeCommandeInterneItemDicSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field='designation')
     class Meta:
         model = BonDeCommandeInterneItem
         fields = ['id', 'produit','quantite_demandee','quantite_accorde']
 
-class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
-    items = BonDeCommandeInterneItemSerializer(many=True)  # Champ de relation imbriquée
+class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
+    items = BonDeCommandeInterneItemDicSerializer(many=True)  # Champ de relation imbriquée
 
     class Meta:
         model = BonDeCommandeInterne

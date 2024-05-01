@@ -5,14 +5,14 @@ from consommateur.models import BonDeCommandeInterneItem,BonDeCommandeInterne
 from Service_Achat.models import Produit
 
 
-class BonDeCommandeInterneItemSerializer(serializers.ModelSerializer):
+class BonDeCommandeInterneItemResSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field='designation')
     class Meta:
         model = BonDeCommandeInterneItem
         fields = ['id', 'produit','quantite_demandee','quantite_accorde']
 
-class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
-    items = BonDeCommandeInterneItemSerializer(many=True)  # Champ de relation imbriquée
+class BonDeCommandeInterneResSerializer(serializers.ModelSerializer):
+    items = BonDeCommandeInterneItemResSerializer(many=True)  # Champ de relation imbriquée
 
     class Meta:
         model = BonDeCommandeInterne
