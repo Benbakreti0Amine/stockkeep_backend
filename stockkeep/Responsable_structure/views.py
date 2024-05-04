@@ -9,6 +9,9 @@ class BonDeCommandeInterneRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BonDeCommandeInterne.objects.all()
     serializer_class = BonDeCommandeInterneResSerializer
 
+
 class BonDeCommandeInterneListView(generics.ListAPIView):
-    queryset = BonDeCommandeInterne.objects.all()
     serializer_class = BonDeCommandeInterneResSerializer
+
+    def get_queryset(self):
+        return BonDeCommandeInterne.objects.exclude(status='External Discharge')

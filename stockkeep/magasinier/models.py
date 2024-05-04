@@ -56,6 +56,7 @@ class BonDeSortie(models.Model):
     TYPE_CHOICES = (
         ('Supply', 'Supply'),
         ('Decharge', 'Decharge'),
+
     )
     type = models.CharField(max_length=40, choices=TYPE_CHOICES)
 

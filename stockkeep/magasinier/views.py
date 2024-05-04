@@ -9,9 +9,8 @@ from Service_Achat.models import BonDeCommande
 from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
-from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer
+from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer,BonDeCommandeInterneMagaSerializer
 from .models import BonDeReception, BonDeReceptionItem,BonDeSortie
-from consommateur.serializers import BonDeCommandeInterneSerializer
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
 
@@ -264,9 +263,9 @@ class BonDeSortieListView(generics.ListAPIView):
     queryset = BonDeSortie.objects.all()
     serializer_class = BonDeSortieSerializer
 
-class BonDeCommandeInterneListView(generics.ListAPIView):
+class BonDeCommandeInterneListCreateView(generics.ListCreateAPIView):
     queryset = BonDeCommandeInterne.objects.all()
-    serializer_class = BonDeCommandeInterneSerializer
+    serializer_class = BonDeCommandeInterneMagaSerializer
 
 class GenerateBonDeSortiePDFView(views.APIView):
      def get(self, request, bon_de_sortie_id, *args, **kwargs):

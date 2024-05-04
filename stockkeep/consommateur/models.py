@@ -49,6 +49,7 @@ class BonDeCommandeInterne(models.Model):
         ('Consulted by the responsable', 'Consulted by the responsable'),
         ('Consulted by the director', 'Consulted by the director'),
         ('Delivered', 'Delivered'),
+        ('External Discharge', 'External Discharge'),
     )
     TYPE_CHOICES = (
         ('Supply', 'Supply'),
