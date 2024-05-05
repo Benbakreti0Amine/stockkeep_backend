@@ -80,3 +80,19 @@ class BonDeSortieItem(models.Model):
 
         # Call save method of the superclass
         super().save(*args, **kwargs)
+
+class EtatInventaire(models.Model):
+    datetime = models.DateTimeField(auto_now_add=True)
+    ETAT_CHOICES = (
+        ('Approuved', 'Approuved'),
+        ('Not Approuved', 'Non Approuved'),
+
+    )
+    etat = models.CharField(max_length=100,choices=ETAT_CHOICES)
+    produits = models.ManyToManyField('EtatInventaireProduit')
+
+
+class EtatInventaireProduit(models.Model):
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    quantite_physique = models.IntegerField(default=0)
+    observation = models.TextField(blank=True)

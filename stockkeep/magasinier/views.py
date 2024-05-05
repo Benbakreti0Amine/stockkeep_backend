@@ -10,7 +10,8 @@ from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer,BonDeCommandeInterneMagaSerializer
-from .models import BonDeReception, BonDeReceptionItem,BonDeSortie
+from .serializers import EtatInventaireSerializer
+from .models import BonDeReception, BonDeReceptionItem,BonDeSortie,EtatInventaire
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
 
@@ -409,3 +410,10 @@ class GenerateBonDeSortiePDFView(views.APIView):
         return FileResponse(buffer, as_attachment=True, filename=f'bondereception_{bon_de_sortie_id}.pdf')
 
 
+class EtatInventaireListCreateAPIView(generics.ListCreateAPIView):
+    queryset = EtatInventaire.objects.all()
+    serializer_class = EtatInventaireSerializer
+
+class EtatInventaireRUDView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = EtatInventaire.objects.all()
+    serializer_class = EtatInventaireSerializer
