@@ -3,7 +3,7 @@ from rest_framework import serializers
 from Service_Achat.models import Produit
 
 from .models import BonDeReception, BonDeReceptionItem
-from .models import BonDeSortie, BonDeSortieItem,EtatInventaireProduit,EtatInventaire
+from .models import BonDeSortie, BonDeSortieItem,EtatInventaireProduit,EtatInventaire#,FicheMovement
 from consommateur.models import  BonDeCommandeInterneItem,BonDeCommandeInterne
 from consommateur.serializers import  BonDeCommandeInterneItemSerializer
 
@@ -99,11 +99,12 @@ class BonDeCommandeInterneMagaSerializer(serializers.ModelSerializer):
 ######################################################################
 ##################################################################
 class EtatInventaireProduitSerializer(serializers.ModelSerializer):
-    produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field="designation")
+    produit = serializers.SlugRelatedField(queryset=Produit.objects.all(), slug_field="designation")
 
     class Meta:
         model = EtatInventaireProduit
-        fields = ['produit', 'quantite_physique', 'observation']
+        fields = ['produit', 'quantite_physique', 'quantite_logique', 'observation']
+        read_only = ['quantite_logique']
 
 class EtatInventaireSerializer(serializers.ModelSerializer):
     produits = EtatInventaireProduitSerializer(many=True)
@@ -111,10 +112,13 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = EtatInventaire
         fields = ['id','datetime', 'etat', 'produits']
+        read_only_fields = ['etat']
 
     def create(self, validated_data):
-        etat = validated_data.pop('etat')
+
         produits_data = validated_data.pop('produits')
+
+        validated_data['etat'] = 'Not Approuved' 
 
         etat_inventaire_produits = []
 
@@ -129,13 +133,13 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
             # Check if the product is already associated with the EtatInventaire
             if EtatInventaireProduit.objects.filter(produit=produit, quantite_physique=quantite_physique).exists():
                 raise serializers.ValidationError("An entry for product {} with the same name already exists in this inventory state.".format(produit.designation))
-
+            quantite_logique = produit.quantite_en_stock
             produit.quantite_en_stock = quantite_physique
             produit.save()
-            etat_inventaire_produit = EtatInventaireProduit.objects.create(produit=produit, quantite_physique=quantite_physique, observation=observation)
+            etat_inventaire_produit = EtatInventaireProduit.objects.create(produit=produit, quantite_physique=quantite_physique, observation=observation,quantite_logique=quantite_logique)
             etat_inventaire_produits.append(etat_inventaire_produit)
 
-        etat_inventaire = EtatInventaire.objects.create(etat=etat)
+        etat_inventaire = EtatInventaire.objects.create()
         
         # Add associated produits using set()
         etat_inventaire.produits.set(etat_inventaire_produits)
@@ -174,3 +178,13 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
+# class FicheMovementSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FicheMovement
+#         fields = '__all__'
+
+#     def get_read_only_fields(self, *args, **kwargs):
+#         read_only_fields = super().get_read_only_fields(*args, **kwargs)
+#         read_only_fields.extend(['date_entree', 'fournisseur', 'quantite_entree', 'consommateur', 'date_sortie', 'quantite_sortie', 'numero_bon', 'reste', 'observations'])
+#         return read_only_fields

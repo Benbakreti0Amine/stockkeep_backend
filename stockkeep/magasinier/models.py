@@ -95,4 +95,18 @@ class EtatInventaire(models.Model):
 class EtatInventaireProduit(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
     quantite_physique = models.IntegerField(default=0)
+    quantite_logique = models.IntegerField(default=0)
     observation = models.TextField(blank=True)
+
+
+# class FicheMovement(models.Model):
+#     produit_id = models.IntegerField()  # ID of the related product
+#     date_entree = models.DateField(null=True, blank=True)
+#     fournisseur = models.CharField(max_length=255,blank=True)
+#     quantite_entree = models.IntegerField(null=True, blank=True)
+#     consommateur = models.CharField(max_length=255, null=True, blank=True)
+#     date_sortie = models.DateField(null=True, blank=True)
+#     quantite_sortie = models.IntegerField(null=True, blank=True)
+#     numero_bon = models.CharField(max_length=255, null=True, blank=True)
+#     reste = models.IntegerField(null=True, blank=True)
+#     observations = models.TextField(null=True, blank=True)

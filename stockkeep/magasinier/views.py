@@ -1,17 +1,17 @@
 from django.shortcuts import get_object_or_404
 from io import BytesIO
-
+from django.db.models import Sum
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import views, status,generics
 
-from Service_Achat.models import BonDeCommande
+from Service_Achat.models import BonDeCommande,Produit
 from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer,BonDeCommandeInterneMagaSerializer
-from .serializers import EtatInventaireSerializer
-from .models import BonDeReception, BonDeReceptionItem,BonDeSortie,EtatInventaire
+from .serializers import EtatInventaireSerializer#,FicheMovementSerializer
+from .models import BonDeReception, BonDeReceptionItem,BonDeSortie,EtatInventaire,BonDeSortieItem#,FicheMovement
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
 
@@ -417,3 +417,79 @@ class EtatInventaireListCreateAPIView(generics.ListCreateAPIView):
 class EtatInventaireRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = EtatInventaire.objects.all()
     serializer_class = EtatInventaireSerializer
+
+# class GenerateFichMouv(APIView):
+#     def get(self, request):
+#         fiches = FicheMovement.objects.all()
+#         serializer = FicheMovementSerializer(fiches, many=True)
+#         return Response(serializer.data)
+
+#     def post(self, request):
+#         # Check if 'produit_id' is provided in the request data
+#         if 'produit_id' not in request.data:
+#             return Response({'error': 'Product ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         produit_id = request.data['produit_id']
+
+#         try:
+#             # Retrieve product details
+#             product = Produit.objects.get(id=produit_id)
+
+#             # Retrieve suppliers and reception dates from BonDeReception
+#             receptions = BonDeReception.objects.filter(items__nom_produit=product.designation)
+#             suppliers_dates = [{'fournisseur': reception.bon_de_commande.fournisseur, 'date_entree': reception.date} for reception in receptions]
+
+#             # Calculate total quantity received
+#             total_quantity_received = receptions.aggregate(total=Sum('items__quantite_livree'))['total'] or 0
+
+#             # Retrieve details of related BonDeSortie
+#             sorties = BonDeSortieItem.objects.filter(bon_de_commande_interne_item__produit=product)
+
+#             # Retrieve the last date of sortie
+#             last_date_entree = None
+#             if sorties.exists():
+#                 last_date_entree = sorties.first().bon_de_sortie.date
+
+#             # Retrieve all unique consumer IDs who demanded the product
+#             consumer_ids = set()
+#             for sortie in sorties:
+#                 bon_de_sortie = sortie.bon_de_sortie
+#                 if bon_de_sortie:
+#                     consumer_ids.add(bon_de_sortie.bon_de_commande_interne.Consommateur_id)
+
+#             # Convert consumer IDs to strings
+#             consumers = [str(consumer_id) for consumer_id in consumer_ids]
+
+#             # Calculate the remaining quantity
+#             remaining_quantity = total_quantity_received - sum(sortie.quantite_accorde for sortie in sorties)
+
+#             # Retrieve IDs of related BonDeSortie instances
+#             bon_de_sortie_ids = list(sortie.bon_de_sortie.id for sortie in sorties)
+
+#             # Create fiche de mouvement instance
+#             fiche_de_mouvement_data = {
+#                 'produit_id': produit_id,
+#                 'date_entree': suppliers_dates[0]['date_entree'] if suppliers_dates else None,
+#                 'fournisseur': str(suppliers_dates[0]['fournisseur']),
+#                 'quantite_entree': total_quantity_received,
+#                 'consommateurs': consumers,
+#                 'date_sortie': last_date_entree,
+#                 'quantite_sortie': sum(sortie.quantite_accorde for sortie in sorties),
+#                 'reste': remaining_quantity,
+#                 'bon_de_sortie_ids': bon_de_sortie_ids,
+#                 'observations': ','.join(sortie.observation for sortie in sorties) if sorties.exists() else None
+#             }
+
+#             serializer = FicheMovementSerializer(data=fiche_de_mouvement_data)
+#             serializer.is_valid(raise_exception=True)
+#             fiche_de_mouvement = serializer.save()
+
+#             response_data = {
+#                 'fiche_de_mouvement_id': fiche_de_mouvement.id,
+#                 **fiche_de_mouvement_data
+#             }
+
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         except Produit.DoesNotExist:
+#             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)

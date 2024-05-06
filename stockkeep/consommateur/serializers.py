@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Consommateur
-        fields = ['id', 'username','password', 'email', 'first_name', 'last_name', 'is_active','structure','role']
+        fields = ['id', 'username','password', 'email', 'first_name', 'last_name', 'is_active','structure','role','image']
         ref_name = 'ConsommateurUser'
 
     def to_representation(self,instance):
