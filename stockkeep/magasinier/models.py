@@ -1,6 +1,7 @@
 from django.db import models
 from Service_Achat.models import BonDeCommande, Produit
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
+from users.models import User
 from django.db import transaction
 
 
@@ -88,17 +89,47 @@ class EtatInventaire(models.Model):
         ('Not Approuved', 'Non Approuved'),
 
     )
-    etat = models.CharField(max_length=100,choices=ETAT_CHOICES)
+    etat = models.CharField(max_length=150,choices=ETAT_CHOICES)
     produits = models.ManyToManyField('EtatInventaireProduit')
 
 
 class EtatInventaireProduit(models.Model):
-    produit = models.ForeignKey(Produit, on_delete=models.CASCADE)
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE,related_name='produ')
     quantite_physique = models.IntegerField(default=0)
     quantite_logique = models.IntegerField(default=0)
     observation = models.TextField(blank=True)
 
+class BonDeCommandeInterneMegaItem(models.Model):
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE,related_name='pro')
+    quantite_demandee = models.PositiveIntegerField(null=True)
+    quantite_accorde = models.PositiveIntegerField(null=True)
 
+    def __str__(self):
+        return f"{self.produit} - {self.quantite_demandee}"
+    
+
+class BonDeCommandeInterneMeg(models.Model):  
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_id')
+    date = models.DateField(auto_now_add=True)
+    STATUS_CHOICES = (
+        ('Created succesfully', 'Created succesfully'),
+        ('Consulted by the responsable', 'Consulted by the responsable'),
+        ('Consulted by the director', 'Consulted by the director'),
+        ('Delivered', 'Delivered'),
+        ('External Discharge', 'External Discharge'),
+    )
+    TYPE_CHOICES = (
+        ('Supply', 'Supply'),
+        ('Decharge', 'Decharge'),
+    )
+    status = models.CharField(max_length=40, choices=STATUS_CHOICES)
+    type = models.CharField(max_length=40, choices=TYPE_CHOICES)
+    items = models.ManyToManyField(BonDeCommandeInterneMegaItem)
+
+
+    def __str__(self):
+        return f"Commande {self.id} - {self.Consommateur_id} - {self.date}"
+    
 # class FicheMovement(models.Model):
 #     produit_id = models.IntegerField()  # ID of the related product
 #     date_entree = models.DateField(null=True, blank=True)
