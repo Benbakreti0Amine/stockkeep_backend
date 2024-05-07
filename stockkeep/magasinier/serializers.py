@@ -2,10 +2,9 @@ from rest_framework import serializers
 
 from Service_Achat.models import Produit
 
-from .models import BonDeReception, BonDeReceptionItem
-from .models import BonDeSortie, BonDeSortieItem,EtatInventaireProduit,EtatInventaire ,BonDeCommandeInterneMeg,BonDeCommandeInterneMegaItem#,FicheMovement
+from .models import BonDeReception, BonDeReceptionItem,EtatInventaireProduit,EtatInventaire 
+from .models import BonDeSortie, BonDeSortieItem,BonDeCommandeInterneMeg,BonDeCommandeInterneMegaItem,FicheMovement,AdditionalInfo
 from consommateur.models import  BonDeCommandeInterneItem,BonDeCommandeInterne
-from consommateur.serializers import  BonDeCommandeInterneItemSerializer
 
 class BonDeReceptionItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -145,7 +144,7 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
             etat_inventaire_produit = EtatInventaireProduit.objects.create(produit=produit, quantite_physique=quantite_physique, observation=observation,quantite_logique=quantite_logique)
             etat_inventaire_produits.append(etat_inventaire_produit)
 
-        etat_inventaire = EtatInventaire.objects.create()
+        etat_inventaire = EtatInventaire.objects.create(**validated_data)
         
         # Add associated produits using set()
         etat_inventaire.produits.set(etat_inventaire_produits)
@@ -185,12 +184,45 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
         return instance
 
 
-# class FicheMovementSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = FicheMovement
-#         fields = '__all__'
+class FicheMovementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FicheMovement
+        fields = '__all__'
 
-#     def get_read_only_fields(self, *args, **kwargs):
-#         read_only_fields = super().get_read_only_fields(*args, **kwargs)
-#         read_only_fields.extend(['date_entree', 'fournisseur', 'quantite_entree', 'consommateur', 'date_sortie', 'quantite_sortie', 'numero_bon', 'reste', 'observations'])
-#         return read_only_fields
+    def get_read_only_fields(self, *args, **kwargs):
+        read_only_fields = super().get_read_only_fields(*args, **kwargs)
+        read_only_fields.extend(['date_entree', 'fournisseur', 'quantite_entree', 'consommateur', 'date_sortie', 'quantite_sortie', 'numero_bon', 'reste', 'observations'])
+        return read_only_fields
+    
+
+class AdditionalInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdditionalInfo
+        fields = ['id', 'numero_bon','consommateur', 'date_sortie', 'quantite_sortie', 'observations']
+    def get_read_only_fields(self, *args, **kwargs):
+        read_only_fields = super().get_read_only_fields(*args, **kwargs)
+        read_only_fields.extend(['numero_bon','consommateur', 'quantite_sortie', 'observations' ,'date_sortie'])
+        return read_only_fields
+
+class FicheMovementSerializer(serializers.ModelSerializer):
+    additional_info = AdditionalInfoSerializer(many=True)
+
+    class Meta:
+        model = FicheMovement
+        fields = ['id', 'produit_id', 'date_entree', 'fournisseur', 'quantite_entree', 'sum_quantite_sortie',
+                    'reste', 'additional_info']
+    def get_read_only_fields(self, *args, **kwargs):
+        read_only_fields = super().get_read_only_fields(*args, **kwargs)
+        read_only_fields.extend(['id','date_entree' ,'fournisseur', 'quantite_entree',  'sum_quantite_sortie', 'numero_bon', 'reste', 'additional_info'])
+        return read_only_fields
+    
+    def create(self, validated_data):
+        additional_info_data = validated_data.pop('additional_info', [])  # Remove 'additional_info' from validated_data
+        fiche_movement = FicheMovement.objects.create(**validated_data)  # Create FicheMovement instance
+
+        # Create AdditionalInfo instances and add them to the Many-to-Many field
+        for info in additional_info_data:
+            additional_info_instance = AdditionalInfo.objects.create(**info)
+            fiche_movement.additional_info.add(additional_info_instance)
+
+        return fiche_movement

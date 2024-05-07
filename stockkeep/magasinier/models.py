@@ -130,14 +130,21 @@ class BonDeCommandeInterneMeg(models.Model):
     def __str__(self):
         return f"Commande {self.id} - {self.Consommateur_id} - {self.date}"
     
-# class FicheMovement(models.Model):
-#     produit_id = models.IntegerField()  # ID of the related product
-#     date_entree = models.DateField(null=True, blank=True)
-#     fournisseur = models.CharField(max_length=255,blank=True)
-#     quantite_entree = models.IntegerField(null=True, blank=True)
-#     consommateur = models.CharField(max_length=255, null=True, blank=True)
-#     date_sortie = models.DateField(null=True, blank=True)
-#     quantite_sortie = models.IntegerField(null=True, blank=True)
-#     numero_bon = models.CharField(max_length=255, null=True, blank=True)
-#     reste = models.IntegerField(null=True, blank=True)
-#     observations = models.TextField(null=True, blank=True)
+
+
+class AdditionalInfo(models.Model):
+    numero_bon = models.CharField(max_length=255, null=True, blank=True)
+    quantite_sortie = models.IntegerField(null=True, blank=True)
+    consommateur = models.CharField(max_length=255, null=True, blank=True)
+    observations = models.TextField(null=True, blank=True)
+    date_sortie = models.DateField(null=True, blank=True)
+
+class FicheMovement(models.Model):
+    produit_id = models.IntegerField()  # ID of the related product
+    date_entree = models.DateField(null=True, blank=True)
+    fournisseur = models.CharField(max_length=255, blank=True)
+    quantite_entree = models.IntegerField(null=True, blank=True)
+    sum_quantite_sortie = models.IntegerField(null=True, blank=True)
+    reste = models.IntegerField(null=True, blank=True)
+    additional_info = models.ManyToManyField(AdditionalInfo, blank=True)
+
