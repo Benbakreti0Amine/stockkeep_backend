@@ -1,4 +1,5 @@
 from role.models import Role
+from directeur.models import TicketSuiviCommande
 from structure.models import Structure
 from rest_framework import serializers
 from .models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
@@ -56,36 +57,53 @@ class BonDeCommandeInterneItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'produit','quantite_demandee',]
 
 class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
-    items = BonDeCommandeInterneItemSerializer(many=True)  # Champ de relation imbriquée
+    items = BonDeCommandeInterneItemSerializer(many=True)  # Nested relationship field
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status', 'date']
+        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
+        read_only_fields = ['status']  # Mark status field as read-only
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+
+        validated_data['status'] = 'Created succesfully'  
+
         bon_de_commande = BonDeCommandeInterne.objects.create(**validated_data)
 
         for item_data in items_data:
-
             produit_designation = item_data.pop('produit')
-
             produit = Produit.objects.get(designation=produit_designation)
-
-
-
             item_data['produit'] = produit
 
             item_serializer = BonDeCommandeInterneItemSerializer(data=item_data)
             if item_serializer.is_valid():
                 item = item_serializer.save()
                 bon_de_commande.items.add(item)
-            else:
-                # Handle serializer errors
-                pass
-
-
+        
         bon_de_commande.save()
+        items_info = [{'item': item['produit'].designation, 'quantite': item['quantite_demandee']} for item in items_data]
+        
+        TicketSuiviCommande.objects.create(bon_de_commande=bon_de_commande, etape='consommateur', items=items_info)
 
         return bon_de_commande
-    
+
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', [])  
+
+        instance = super().update(instance, validated_data)
+
+        for item_data in items_data:
+            produit = item_data.get('produit')
+            quantite_demandee = item_data.get('quantite_demandee')
+
+            if produit and quantite_demandee is not None:
+
+                item, created = instance.items.get_or_create(produit=produit, defaults={'quantite_demandee': 0})
+
+
+                item.quantite_demandee = quantite_demandee
+                item.save()
+
+        return instance   

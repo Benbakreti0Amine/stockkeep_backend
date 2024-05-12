@@ -1,4 +1,5 @@
 from role.models import Role
+from directeur.models import TicketSuiviCommande
 from structure.models import Structure
 from rest_framework import serializers
 from consommateur.models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
@@ -49,27 +50,25 @@ class UserSerializer(serializers.ModelSerializer):
         return user
     
 
-class BonDeCommandeInterneItemSerializer(serializers.ModelSerializer):
+class BonDeCommandeInterneItemDicSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field='designation')
     class Meta:
         model = BonDeCommandeInterneItem
         fields = ['id', 'produit','quantite_demandee','quantite_accorde']
 
-class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
-    items = BonDeCommandeInterneItemSerializer(many=True)  # Champ de relation imbriquée
+class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
+    items = BonDeCommandeInterneItemDicSerializer(many=True)  # Champ de relation imbriquée
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status', 'date']
-    
-
+        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
 
     def update(self, instance, validated_data):
 
         items_data = validated_data.pop('items')
         print(items_data)
         instance = super().update(instance, validated_data)
-        instance.status = "directeur"
+        instance.status = "Consulted by the director"
         for item_data in items_data:
             produit = item_data.get('produit')
             print(produit)
@@ -81,5 +80,13 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
                 for item in items:
                     item.quantite_accorde = quantite_accorde
                     item.save()
+
+        items_info = [{'item': item.produit.designation, 'quantite': item.quantite_accorde} for item in instance.items.all()]
+        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='directeur', items_info=items_info)             
         instance.save()
         return instance    
+    
+class TicketSuiviCommandeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketSuiviCommande
+        fields = ['bon_de_commande', 'etape', 'items']

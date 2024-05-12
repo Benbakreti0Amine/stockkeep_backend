@@ -18,19 +18,39 @@ from rest_framework.reverse import reverse
 from urllib.parse import urljoin
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import Permission
-from django.core.serializers import serialize
+from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
 
 
 class ListCreateUser(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 
 class RetrieveUpdateDeleteUser(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+class DeleteUsersWithNoObjects(APIView):
+    def delete(self, request):
+        # Get users with role 'consommateur' and no associated objects
+        users_to_delete = User.objects.filter(role__name='consommateur')
+
+        # Delete the users
+        deleted_count, _ = users_to_delete.delete()
+
+        # Return a response indicating the number of users deleted
+        return Response(data={"message": f"{deleted_count} users deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 class Activate_OR_Desactivate(APIView):
     def put(self, request, user_id):
@@ -54,7 +74,7 @@ class LoginView(APIView):
 
             tokens = create_jwt_pair_for_user(user)
 
-            response = {"message": "Login Successfull", "tokens": tokens,"role":str(user.role)}
+            response = {"message": "Login Successfull", "tokens": tokens,"role":str(user.role),"id":user.id}
             return Response(data=response, status=status.HTTP_200_OK)
 
         else:

@@ -45,12 +45,18 @@ class BonDeCommandeInterne(models.Model):
     Consommateur_id = models.ForeignKey(Consommateur, on_delete=models.CASCADE, related_name='bonDeiommandeinternes')
     date = models.DateField(auto_now_add=True)
     STATUS_CHOICES = (
-        ('transfert', 'Transfert'),
-        ('responsable', 'Responsable'),
-        ('directeur', 'Directeur'),
-        ('validate', 'Validate'),
+        ('Created succesfully', 'Created succesfully'),
+        ('Consulted by the responsable', 'Consulted by the responsable'),
+        ('Consulted by the director', 'Consulted by the director'),
+        ('Delivered', 'Delivered'),
+        ('External Discharge', 'External Discharge'),
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    TYPE_CHOICES = (
+        ('Supply', 'Supply'),
+        ('Decharge', 'Decharge'),
+    )
+    status = models.CharField(max_length=40, choices=STATUS_CHOICES)
+    type = models.CharField(max_length=40, choices=TYPE_CHOICES)
     items = models.ManyToManyField(BonDeCommandeInterneItem)
 
     def __str__(self):

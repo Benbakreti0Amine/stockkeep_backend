@@ -1,5 +1,6 @@
 from django.db import models
 from fournisseur.models import Fournisseur
+from functools import partial
 class Chapitre(models.Model):
     libelle = models.CharField(max_length=255,unique=True)
 
@@ -17,8 +18,8 @@ class Article(models.Model):
 class Produit(models.Model):
     designation = models.CharField(max_length=255,unique=True)
     articles = models.ManyToManyField(Article, related_name='produits')
-    quantite_en_stock = models.IntegerField()
-    quantite_en_security = models.IntegerField()
+    quantite_en_stock = models.IntegerField(default=0)
+    quantite_en_security = models.IntegerField(default=0)
 
 
     def __str__(self):
@@ -32,14 +33,20 @@ class Item(models.Model):
     prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)
     quantite = models.PositiveIntegerField()
     montant = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    reste_a_livrer = models.PositiveIntegerField(null=True)
 
     def save(self, *args, **kwargs):
         # Calculate the amount
         self.montant = self.prix_unitaire * self.quantite
+        if not self.pk:  # Check if it's a new instance
+            self.reste_a_livrer = self.quantite  # Only update reste_a_livrer on creation
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.produit} - {self.quantite}"
+    
+
+    
 
 class BonDeCommande(models.Model):
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
@@ -50,9 +57,8 @@ class BonDeCommande(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
         ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
 
     
 

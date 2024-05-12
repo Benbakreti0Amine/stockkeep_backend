@@ -6,7 +6,6 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 
 from role.models import Role
-
 class MyUserManager(BaseUserManager):
 
     def create_user(self, username, email,first_name,last_name, password, **kwags):
@@ -57,7 +56,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active   = models.BooleanField(default=True, null=False)
     is_staff    = models.BooleanField(default=False, null=False)
     role = models.ForeignKey(Role,on_delete=models.SET_NULL,null=True)
+    image = models.ImageField(upload_to='images/', default='images/default_profile.jpg')
+    # image_link = models.CharField(max_length=255, blank=True, null=True)  # String link for the image
 
+    # # Optionally, if you want to keep the old image field data, you can define a migration to populate the image_link field.
+
+    # # Add a method to retrieve the image URL
+    # def get_image_url(self):
+    #     if self.image_link:
+    #         return self.image_link
+    #     else:
+    #         # Default image URL or any logic you want to use
+    #         return 'images/default_profile.jpg'
 
    
 
