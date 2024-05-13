@@ -3,6 +3,7 @@ from directeur.models import TicketSuiviCommande
 from structure.models import Structure
 from rest_framework import serializers
 from consommateur.models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
+from magasinier.models import EtatInventaireProduit,EtatInventaire
 from users.models import User
 from Service_Achat.models import Produit
 
@@ -86,6 +87,27 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
         instance.save()
         return instance    
     
+class EtatInventaireDicProduitSerializer(serializers.ModelSerializer):
+    produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field="designation")
+
+    class Meta:
+        model = EtatInventaireProduit
+        fields = ['produit', 'quantite_physique', 'observation']
+
+class EtatInventaireDirSerializer(serializers.ModelSerializer):
+    produits = EtatInventaireDicProduitSerializer(many=True)
+
+    class Meta:
+        model = EtatInventaire
+        fields = ['id','datetime', 'etat', 'produits']
+
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.etat = "Approuved"
+        instance.save()
+        return instance
+
 class TicketSuiviCommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketSuiviCommande

@@ -10,14 +10,14 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('magasinier', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('structure', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='structure',
-            name='responsible',
-            field=models.ForeignKey(limit_choices_to={'role__name': 'responsable_structure'}, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='resposable', to=settings.AUTH_USER_MODEL),
+            model_name='bondecommandeinternemeg',
+            name='user_id',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_id', to=settings.AUTH_USER_MODEL),
         ),
     ]

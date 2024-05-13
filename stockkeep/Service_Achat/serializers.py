@@ -18,7 +18,8 @@ class ProduitSerializer(serializers.ModelSerializer):
     articles = serializers.SlugRelatedField(many=True,queryset = Article.objects.all(), slug_field='designation')
     class Meta:
         model = Produit
-        fields = ['id','designation','articles','quantite_en_security']
+        fields = ['id','designation','articles','quantite_en_security','quantite_en_stock']
+        read_only =['quantite_en_stock']
     
 
 

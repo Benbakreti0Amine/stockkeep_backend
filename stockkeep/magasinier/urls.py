@@ -11,4 +11,8 @@ urlpatterns = [
     path('bondesortie/list/', views.BonDeSortieListView.as_view(), name='genererbondesortie'),
     path('bondecommandeinterne/listcreate/',views.BonDeCommandeInterneListCreateView.as_view(), name='bonlist'),
     path('bondesortie/<int:bon_de_sortie_id>/pdf/',views.GenerateBonDeSortiePDFView.as_view(), name='genererbondesortiebdf'),
+    path('etatinventaire/listcreate/',views.EtatInventaireListCreateAPIView.as_view(), name='etatinventire'), 
+    path('etatinventaire/rud/<int:pk>/',views.EtatInventaireRUDView.as_view(), name='etatinventire'), 
+    path('fichemouvement/',views.GenerateFichMouv.as_view(), name='fichemouvement'),
+    path('fichemouvement/<int:fiche_de_mouvement_id>/pdf/',views.GenerateFicheDeMouvementPDFView.as_view(), name='genererfichedemouvpdf'), 
 ] 
