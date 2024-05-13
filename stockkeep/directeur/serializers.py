@@ -102,4 +102,14 @@ class EtatInventaireDirSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
         instance.etat = "Approuved"
         instance.save()
+
+        produits_data = instance.produits.all()
+        for produit_data in produits_data:
+            produit_id = produit_data.id
+            quantite_physique = produit_data.quantite_physique
+            # Assuming you have a related field 'produit' in EtatInventaireDicProduitSerializer
+            produit = instance.produits.get(id=produit_id).produit
+            produit.quantite_en_stock = quantite_physique
+            produit.save()
+
         return instance

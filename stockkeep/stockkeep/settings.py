@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'magasinier',
     'Responsable_structure',
     'directeur',
+    'channels',
+    'notifications',
 
 ]
 
@@ -66,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'magasinier.middleware.RequestMiddleware',
 ]
 
 ROOT_URLCONF = 'stockkeep.urls'
@@ -178,3 +181,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
 # URL used to access the media
 MEDIA_URL = '/media/'
+

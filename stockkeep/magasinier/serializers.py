@@ -39,25 +39,25 @@ class BonDeSortieSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         id= validated_data.pop('bon_de_commande_interne')
         bon_de_commande_interne_id =id.id
-        #print(f"1",bon_de_commande_interne_id)
+        print(f"1",bon_de_commande_interne_id)
         bon_de_commande_interne = BonDeCommandeInterne.objects.get(pk=bon_de_commande_interne_id)
         validated_data['type'] = 'Decharge' if bon_de_commande_interne.type == 'Decharge' else 'Supply'
-        #print(bon_de_commande_interne)
+        print(bon_de_commande_interne)
         bon_de_commande_interne.status = 'Delivered'
         bon_de_commande_interne.save()
 
         items_data = validated_data.pop('items')
-        #print(f"5",items_data)
+        print(f"5",items_data)
         bon_de_sortie = BonDeSortie.objects.create(bon_de_commande_interne=bon_de_commande_interne, **validated_data)
 
         for item_data in items_data:
             bon_de_commande_interne_item = item_data.get('bon_de_commande_interne_item')
-            #print(f"14",bon_de_commande_interne_item)
+            print(f"14",bon_de_commande_interne_item)
             bon_de_commande_interne_item_id = bon_de_commande_interne_item.id  # Extract identifier
-            #print(bon_de_commande_interne_item_id)
+            print(bon_de_commande_interne_item_id)
             quantite_accorde = item_data.get('quantite_accorde')
             bon_de_commande_interne_item = BonDeCommandeInterneItem.objects.get(pk=bon_de_commande_interne_item_id)
-            #print(bon_de_commande_interne_item )
+            print(bon_de_commande_interne_item )
             bon_de_commande_interne_item.quantite_accorde = quantite_accorde
             bon_de_commande_interne_item.save()
             BonDeSortieItem.objects.create(bon_de_sortie=bon_de_sortie, **item_data)
@@ -136,10 +136,7 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("The product {} has no stock available.".format(produit.designation))
 
             # Check if the product is already associated with the EtatInventaire
-            if EtatInventaireProduit.objects.filter(produit=produit, quantite_physique=quantite_physique).exists():
-                raise serializers.ValidationError("An entry for product {} with the same name already exists in this inventory state.".format(produit.designation))
             quantite_logique = produit.quantite_en_stock
-            produit.quantite_en_stock = quantite_physique
             produit.save()
             etat_inventaire_produit = EtatInventaireProduit.objects.create(produit=produit, quantite_physique=quantite_physique, observation=observation,quantite_logique=quantite_logique)
             etat_inventaire_produits.append(etat_inventaire_produit)
@@ -184,15 +181,6 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
         return instance
 
 
-class FicheMovementSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FicheMovement
-        fields = '__all__'
-
-    def get_read_only_fields(self, *args, **kwargs):
-        read_only_fields = super().get_read_only_fields(*args, **kwargs)
-        read_only_fields.extend(['date_entree', 'fournisseur', 'quantite_entree', 'consommateur', 'date_sortie', 'quantite_sortie', 'numero_bon', 'reste', 'observations'])
-        return read_only_fields
     
 
 class AdditionalInfoSerializer(serializers.ModelSerializer):

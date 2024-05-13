@@ -69,6 +69,9 @@ class BonDeSortieItem(models.Model):
     observation = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
+        
+        super().save(*args, **kwargs)
+
         with transaction.atomic():
             # If the type is "Decharge", subtract quantite_accorde from quantite_en_stock of Produit
             if self.bon_de_sortie.type == 'Supply':
@@ -78,9 +81,6 @@ class BonDeSortieItem(models.Model):
                 # Subtract quantite_accorde from quantite_en_stock of Produit
                 produit.quantite_en_stock -= self.quantite_accorde
                 produit.save()
-
-        # Call save method of the superclass
-        super().save(*args, **kwargs)
 
 class EtatInventaire(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
