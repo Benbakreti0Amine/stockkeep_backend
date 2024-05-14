@@ -3,6 +3,7 @@ from Service_Achat.models import BonDeCommande, Produit
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 from users.models import User
 from django.db import transaction
+from datetime import date
 
 
 class BonDeReception(models.Model):
@@ -53,7 +54,7 @@ class BonDeReceptionItem(models.Model):
 
 class BonDeSortie(models.Model):
     bon_de_commande_interne = models.ForeignKey(BonDeCommandeInterne, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=date(2024, 4, 3))
     TYPE_CHOICES = (
         ('Supply', 'Supply'),
         ('Decharge', 'Decharge'),

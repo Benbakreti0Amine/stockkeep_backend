@@ -20,6 +20,7 @@ class Produit(models.Model):
     articles = models.ManyToManyField(Article, related_name='produits')
     quantite_en_stock = models.IntegerField(default=0)
     quantite_en_security = models.IntegerField(default=0)
+    
 
 
     def __str__(self):

@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import get_object_or_404
 from io import BytesIO
 from django.db.models import Sum
@@ -8,7 +9,7 @@ from rest_framework import views, status,generics
 from Service_Achat.models import BonDeCommande,Produit
 from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
-from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
+from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem, Consommateur
 from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer
 from .serializers import BonDeCommandeInterneMagaSerializer, EtatInventaireSerializer,FicheMovementSerializer,AdditionalInfoSerializer
 from .models import BonDeReception, BonDeReceptionItem,BonDeSortie,EtatInventaire, BonDeSortieItem,BonDeCommandeInterneMeg,FicheMovement
@@ -20,6 +21,181 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
 from reportlab.lib.styles import ParagraphStyle,getSampleStyleSheet
 from reportlab.lib.units import inch
 
+# from django.http import JsonResponse
+# from django.views import View
+# from django.utils.dateformat import DateFormat
+# from django.db.models import Sum
+# from .models import Produit, BonDeSortieItem
+
+# class StockDataView(View):
+#     def get(self, request):
+#         data = []
+
+#         produits = Produit.objects.all()
+#         for produit in produits:
+#             # Calculate the quantity consumed
+#             quantity_consumed = BonDeSortieItem.objects.filter(
+#                 bon_de_commande_interne_item__produit=produit,
+#                 bon_de_sortie__type='Supply'
+#             ).aggregate(total_consumed=Sum('quantite_accorde'))['total_consumed'] or 0
+
+#             item = {
+#                 "id_produit": str(produit.id),
+#                 "quantity_in_stock": produit.quantite_en_stock,
+#                 "designation": produit.designation,
+#                 "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
+#                 "quantity_consumed": quantity_consumed,
+#                 "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example              
+#             }
+#             #"date": DateFormat(produit.date).format('Y-m-d') if produit.date else 'N/A'
+#             data.append(item)
+
+#         return JsonResponse(data, safe=False)
+from django.http import JsonResponse
+from django.views import View
+from django.db.models import Sum, F
+from django.db.models.functions import ExtractMonth, ExtractYear
+from .models import Produit, BonDeSortieItem
+import calendar
+
+class MonthlyStockDataView(View):
+    def get(self, request):
+        data = []
+        
+        # Annotate BonDeSortieItem with month and year
+        items = BonDeSortieItem.objects.annotate(
+            month=ExtractMonth('bon_de_sortie__date'),
+            year=ExtractYear('bon_de_sortie__date')
+        )
+
+        # Get list of all products
+        produits = Produit.objects.all()
+        
+        # Iterate through each product
+        for produit in produits:
+            # Filter items related to the current product
+            #items hiya bon de sortieeee
+
+            product_items = items.filter(
+                bon_de_commande_interne_item__produit=produit,
+                bon_de_sortie__type='Supply'
+            ).values('month', 'year').annotate(
+                total_consumed=Sum('quantite_accorde')
+            ).order_by('year', 'month')
+
+            # Iterate through each month and aggregate data
+            for item in product_items:
+                month_name = calendar.month_name[item['month']]
+                quantity_consumed = item['total_consumed'] or 0
+                quantity_in_stock = produit.quantite_en_stock  # Assume you want the latest stock value
+
+                data.append({
+                    "designation": produit.designation,
+                    "month": month_name,
+                    "year": item['year'],
+                    "quantity_in_stock": quantity_in_stock,
+                    "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
+                    "quantity_consumed": quantity_consumed,
+                    "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example
+                })
+
+        return JsonResponse(data, safe=False)
+class FilteredMonthlyStockDataView(View):
+    def get(self, request, designation):
+        data = []
+        
+        # Annotate BonDeSortieItem with month and year
+        items = BonDeSortieItem.objects.annotate(
+            month=ExtractMonth('bon_de_sortie__date'),
+            year=ExtractYear('bon_de_sortie__date')
+        )
+
+        # Get the specific product by designation
+        try:
+            produit = Produit.objects.get(designation=designation)
+        except Produit.DoesNotExist:
+            return JsonResponse({"error": "Product not found"}, status=404)
+
+        # Filter items related to the specific product
+        product_items = items.filter(
+            bon_de_commande_interne_item__produit=produit,
+            bon_de_sortie__type='Supply'
+        ).values('month', 'year').annotate(
+            total_consumed=Sum('quantite_accorde')
+        ).order_by('year', 'month')
+
+        # Iterate through each month and aggregate data
+        for item in product_items:
+            month_name = calendar.month_name[item['month']]
+            quantity_consumed = item['total_consumed'] or 0
+            quantity_in_stock = produit.quantite_en_stock  # Assume you want the latest stock value
+
+            data.append({
+                "designation": produit.designation,
+                "month": month_name,
+                "year": item['year'],
+                "quantity_in_stock": quantity_in_stock,
+                "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
+                "quantity_consumed": quantity_consumed,
+                "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example
+            })
+
+        return JsonResponse(data, safe=False)
+class FilteredStockDataView(View):
+    def get(self, request):
+        # Get the designation query parameter
+        designation = request.GET.get('designation', None)
+
+        # Get the full data from the MonthlyStockDataView
+        full_data_view = MonthlyStockDataView()
+        full_data_response = full_data_view.get(request)
+        full_data = full_data_response.content.decode('utf-8')
+        full_data = json.loads(full_data)
+
+        # Filter the data by designation if provided
+        if designation:
+            filtered_data = [entry for entry in full_data if entry['designation'] == designation]
+        else:
+            filtered_data = full_data
+
+        return JsonResponse(filtered_data, safe=False)
+    
+class TopConsumedProductsByStructureView(View):
+    def get(self, request, structure_id):
+        # Get the consommateurs related to the given structure
+        consommateurs = Consommateur.objects.filter(structure_id=structure_id)
+        print('///////////////////////////////////////////////////////////')
+        print(consommateurs)
+        consommateur_ids = [consommateur.id for consommateur in consommateurs]
+        print(consommateur_ids)
+        
+        # print(BonDeSortieItem.objects.bon_de_commande_interne_item__produit__designation)
+        # Get the related BonDeSortieItems
+        consumed_data = BonDeSortieItem.objects.filter(
+            bon_de_sortie__type='Supply',
+            bon_de_commande_interne_item__items__Consommateur_id__in=consommateur_ids
+        ).values(
+            'bon_de_commande_interne_item__produit__designation',
+            'bon_de_commande_interne_item__produit__quantite_en_stock'
+        ).annotate(
+            total_consumed=Sum('quantite_accorde')
+        ).order_by('-total_consumed')  # Sort by consumed quantity in descending order
+
+        # Prepare the response data
+        data = []
+        for item in consumed_data:
+            designation = item['bon_de_commande_interne_item__produit__designation']
+            consumed = item['total_consumed']
+            remaining = item['bon_de_commande_interne_item__produit__quantite_en_stock']
+
+            data.append({
+                'designation': designation,
+                'consumed': consumed,
+                'remaining': remaining,
+                'remaining_color': 'red' if remaining <= 10 else 'green'  # Change color based on remaining quantity
+            })
+
+        return JsonResponse(data, safe=False)
 
 class GenerateReceipt(APIView):
     def post(self, request):
