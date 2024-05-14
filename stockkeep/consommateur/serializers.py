@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
 from users.models import User
 from Service_Achat.models import Produit
-
+from directeur.models import TicketSuiviCommande
 from rest_framework.validators import ValidationError
 
 class UserSerializer(serializers.ModelSerializer):
@@ -81,7 +81,9 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
                 bon_de_commande.items.add(item)
         
         bon_de_commande.save()
-
+        items_info = [{'item': item['produit'].designation, 'quantite': item['quantite_demandee']} for item in items_data]
+        
+        TicketSuiviCommande.objects.create(bon_de_commande=bon_de_commande, etape='consommateur', items=items_info)
         return bon_de_commande
 
 

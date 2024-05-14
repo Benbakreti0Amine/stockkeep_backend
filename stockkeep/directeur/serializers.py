@@ -1,4 +1,5 @@
 from role.models import Role
+from directeur.models import TicketSuiviCommande
 from structure.models import Structure
 from rest_framework import serializers
 from consommateur.models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
@@ -80,9 +81,14 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
                 for item in items:
                     item.quantite_accorde = quantite_accorde
                     item.save()
+
+        items_info = [{'item': item.produit.designation, 'quantite': item.quantite_accorde} for item in instance.items.all()]
+        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='directeur', items_info=items_info) 
         instance.save()
         return instance    
     
+
+
 class EtatInventaireDicProduitSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field="designation")
 
@@ -113,3 +119,9 @@ class EtatInventaireDirSerializer(serializers.ModelSerializer):
             produit.save()
 
         return instance
+    
+
+class TicketSuiviCommandeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketSuiviCommande
+        fields = ['bon_de_commande', 'etape', 'items']

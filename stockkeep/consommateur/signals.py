@@ -6,7 +6,7 @@ from magasinier.middleware import current_request
 
 @receiver(post_save, sender=BonDeCommandeInterne)
 def send_notification_on_bci(sender, instance, created, **kwargs):
-    if not created:  # Check if the instance is being updated
+    if created : 
         if instance.status == 'Created succesfully':
             user = instance.user_id
             consommateur = Consommateur.objects.get(user_ptr=user)
@@ -16,7 +16,8 @@ def send_notification_on_bci(sender, instance, created, **kwargs):
                 role = user.role,
                 titre = "New internal order"
             )
-        elif instance.status == 'Consulted by the responsable':
+    if not created:  # Check if the instance is being updated
+        if instance.status == 'Consulted by the responsable':
             user = current_request().user
             Notification.objects.get_or_create(
                 recipient=user,

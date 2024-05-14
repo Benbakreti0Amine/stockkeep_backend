@@ -57,7 +57,7 @@ class BonDeCommandeInterne(models.Model):
     )
     status = models.CharField(max_length=40, choices=STATUS_CHOICES)
     type = models.CharField(max_length=40, choices=TYPE_CHOICES)
-    items = models.ManyToManyField(BonDeCommandeInterneItem)
+    items = models.ManyToManyField(BonDeCommandeInterneItem, related_name='items')
 
     def __str__(self):
         return f"Commande {self.id} - {self.user_id} - {self.date}"

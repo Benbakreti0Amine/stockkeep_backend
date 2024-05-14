@@ -54,6 +54,7 @@ class BonDeReceptionItem(models.Model):
 class BonDeSortie(models.Model):
     bon_de_commande_interne = models.ForeignKey(BonDeCommandeInterne, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
+    # date = models.DateField(default=date(2024, 4, 3))
     TYPE_CHOICES = (
         ('Supply', 'Supply'),
         ('Decharge', 'Decharge'),

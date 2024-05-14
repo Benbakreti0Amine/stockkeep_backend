@@ -2,7 +2,10 @@
 from rest_framework import generics
 from consommateur.models import BonDeCommandeInterne
 from magasinier.models import EtatInventaire
-from .serializers import BonDeCommandeInterneDicSerializer,EtatInventaireDirSerializer
+from directeur.models import TicketSuiviCommande
+from .serializers import BonDeCommandeInterneDicSerializer,EtatInventaireDirSerializer,TicketSuiviCommandeSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
 # Create your views here.
 
 class BonDeCommandeInterneRUDView(generics.RetrieveUpdateDestroyAPIView):
@@ -21,3 +24,21 @@ class EtatInventaireDirListView(generics.ListAPIView):
 class EtatInventaireDirRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = EtatInventaire.objects.all()
     serializer_class = EtatInventaireDirSerializer
+
+class TicketListView(generics.ListAPIView):
+    queryset = TicketSuiviCommande.objects.all()
+    serializer_class = TicketSuiviCommandeSerializer
+
+class TicketSearchView(APIView):
+    def get(self, request, bon_de_commande_id):
+        tickets = TicketSuiviCommande.objects.filter(bon_de_commande_id=bon_de_commande_id)
+        data = {
+            "bon_de_commande": bon_de_commande_id,
+            "etapes": []
+        }
+        for ticket in tickets:
+            data["etapes"].append({
+                "etape": ticket.etape,
+                "items": ticket.items
+            })
+        return Response(data) 

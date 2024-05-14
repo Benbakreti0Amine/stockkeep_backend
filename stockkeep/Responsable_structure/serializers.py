@@ -3,6 +3,7 @@
 from rest_framework import serializers
 from consommateur.models import BonDeCommandeInterneItem,BonDeCommandeInterne
 from Service_Achat.models import Produit
+from directeur.models import TicketSuiviCommande
 
 
 class BonDeCommandeInterneItemResSerializer(serializers.ModelSerializer):
@@ -37,5 +38,7 @@ class BonDeCommandeInterneResSerializer(serializers.ModelSerializer):
                     item.quantite_accorde = quantite_accorde
                     item.save()
                     
+        items_info = [{'item': item.produit.designation, 'quantite': item.quantite_accorde} for item in instance.items.all()]
+        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='responsable', items_info=items_info)        
         instance.save()
         return instance    
