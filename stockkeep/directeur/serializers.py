@@ -61,7 +61,7 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
+        fields = ['id', 'user_id', 'items', 'status','type', 'date']
 
     def update(self, instance, validated_data):
 

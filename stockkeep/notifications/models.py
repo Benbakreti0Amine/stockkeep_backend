@@ -8,3 +8,4 @@ class Notification(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     read_status = models.BooleanField(default=False)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='notification')
+    titre = models.CharField(max_length=255)

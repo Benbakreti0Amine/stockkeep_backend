@@ -12,5 +12,6 @@ def send_notification_on_etat(sender, instance, created, **kwargs):
             Notification.objects.get_or_create(
                 recipient=user,
                 message=f"{user.username} has approuved the inventory status N° {instance.id}.",
-                role=user.role
+                role=user.role,
+                titre = "Inventory status approuvement"
             )

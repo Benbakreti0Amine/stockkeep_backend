@@ -15,5 +15,6 @@ def create_notification(sender, instance, created, **kwargs):
                 Notification.objects.create(
                     recipient=user,
                     message=f"Product with id {produit.id} reaches the quantity of security.",
-                    role=user.role
+                    role=user.role,
+                    titre = "Quantity of security"
                 )

@@ -3,7 +3,7 @@ from rest_framework import serializers
 from Service_Achat.models import Produit
 
 from .models import BonDeReception, BonDeReceptionItem,EtatInventaireProduit,EtatInventaire 
-from .models import BonDeSortie, BonDeSortieItem,BonDeCommandeInterneMeg,BonDeCommandeInterneMegaItem,FicheMovement,AdditionalInfo
+from .models import BonDeSortie, BonDeSortieItem,FicheMovement,AdditionalInfo
 from consommateur.models import  BonDeCommandeInterneItem,BonDeCommandeInterne
 
 class BonDeReceptionItemSerializer(serializers.ModelSerializer):
@@ -65,34 +65,35 @@ class BonDeSortieSerializer(serializers.ModelSerializer):
 
         return bon_de_sortie
     
-
+    
 class BonDeCommandeInterneItemMegaSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field='designation')
     class Meta:
-        model = BonDeCommandeInterneMegaItem
+        model = BonDeCommandeInterneItem
         fields = ['id', 'produit','quantite_demandee','quantite_accorde']
 
 class BonDeCommandeInterneMagaSerializer(serializers.ModelSerializer):
     items = BonDeCommandeInterneItemMegaSerializer(many=True)  # Nested relationship field
 
     class Meta:
-        model = BonDeCommandeInterneMeg
+        model = BonDeCommandeInterne
         fields = ['id', 'user_id', 'items', 'status','type', 'date']
-        read_only_fields = ['status']  # Mark status field as read-only
+        read_only_fields = ['status','type']  # Mark status field as read-only
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
 
         validated_data['status'] = 'External Discharge'  
+        validated_data['type'] = 'Decharge'   
 
-        bon_de_commande = BonDeCommandeInterneMeg.objects.create(**validated_data)
+        bon_de_commande = BonDeCommandeInterne.objects.create(**validated_data)
 
         for item_data in items_data:
             produit_designation = item_data.pop('produit')
             produit = Produit.objects.get(designation=produit_designation)
             item_data['produit'] = produit
 
-            item_serializer = BonDeCommandeInterneMagaSerializer(data=item_data)
+            item_serializer = BonDeCommandeInterneItemMegaSerializer(data=item_data)
             if item_serializer.is_valid():
                 item = item_serializer.save()
                 bon_de_commande.items.add(item)

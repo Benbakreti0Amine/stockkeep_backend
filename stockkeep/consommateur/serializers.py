@@ -60,7 +60,7 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
+        fields = ['id', 'user_id', 'items', 'status','type', 'date']
         read_only_fields = ['status']  # Mark status field as read-only
 
     def create(self, validated_data):
