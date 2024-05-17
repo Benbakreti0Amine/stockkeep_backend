@@ -99,11 +99,18 @@ class EtatInventaire(models.Model):
 class EtatInventaireProduit(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE,related_name='produ')
     N_inventaire = models.CharField(max_length=255)
+    reste = models.IntegerField(default=0)
+    quantite_entree = models.IntegerField(default=0)
+    quantite_sortie = models.IntegerField(default=0)
     quantite_physique = models.IntegerField(default=0)
     quantite_logique = models.IntegerField(default=0)
     observation = models.TextField(blank=True)
+    ecrat = models.IntegerField(blank=True)
 
-
+    def save(self, *args, **kwargs):
+        """Overrides the default save method to calculate difference."""
+        self.ecrat = self.quantite_logique - self.quantite_physique  
+        super().save(*args, **kwargs) 
 
 
 class AdditionalInfo(models.Model):

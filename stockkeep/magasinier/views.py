@@ -455,7 +455,7 @@ class GenerateFichMouv(APIView):
                     'numero_bon': str(sortie.bon_de_sortie.id),
                     'quantite_sortie': sortie.quantite_accorde,
                     'observations': sortie.observation,
-                    'consommateur':str(bon_de_sortie.bon_de_commande_interne.Consommateur_id),
+                    'consommateur':str(bon_de_sortie.bon_de_commande_interne.user_id),
                     'date_sortie':bon_de_sortie.date
                 })
 

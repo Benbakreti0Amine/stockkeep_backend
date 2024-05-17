@@ -1,7 +1,9 @@
+import datetime
 from rest_framework import serializers
 
 from Service_Achat.models import Produit,Chapitre,Article
-
+from django.db import transaction
+from django.db.models import Sum
 from .models import BonDeReception, BonDeReceptionItem,EtatInventaireProduit,EtatInventaire 
 from .models import BonDeSortie, BonDeSortieItem,FicheMovement,AdditionalInfo
 from consommateur.models import  BonDeCommandeInterneItem,BonDeCommandeInterne
@@ -109,8 +111,8 @@ class EtatInventaireProduitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EtatInventaireProduit
-        fields = ['produit', 'quantite_physique', 'quantite_logique', 'observation','N_inventaire']
-        read_only = ['quantite_logique']
+        fields = ['produit','reste','quantite_entree','quantite_sortie', 'quantite_physique', 'quantite_logique', 'observation','N_inventaire','ecrat']
+        read_only = ['quantite_entree','quantite_sortie','quantite_logique','reste','ecrat']
 
 
 class EtatInventaireSerializer(serializers.ModelSerializer):
@@ -126,9 +128,9 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         produits_data = validated_data.pop('produits')
         article = validated_data.get('article')
+        year = datetime.date.today().year
 
         validated_data['etat'] = 'Not Approuved'
-
         etat_inventaire_produits = []
 
         for produit_data in produits_data:
@@ -142,32 +144,50 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"The product {produit.designation} is not associated with the article {article.designation}."
                 )
-
+            
             if produit.quantite_en_stock <= 0:
                 raise serializers.ValidationError(
                     f"The product {produit.designation} has no stock available."
                 )
+            # Calculate quantite_entree and quantite_sortie
+            with transaction.atomic():
+                # Quantite entree
+                quantite_entree = BonDeReceptionItem.objects.filter(
+                    bon_de_reception__date__year=year,
+                    nom_produit=produit
+                ).aggregate(sum_quantite_livree=Sum('quantite_livree'))['sum_quantite_livree'] or 0
 
-            quantite_logique = produit.quantite_en_stock
-            produit.save()
-            etat_inventaire_produit = EtatInventaireProduit.objects.create(
-                produit=produit, quantite_physique=quantite_physique, 
-                observation=observation, quantite_logique=quantite_logique,
-                N_inventaire=N_inventaire
-            )
-            etat_inventaire_produits.append(etat_inventaire_produit)
+                # Quantite sortie
+                quantite_sortie = BonDeSortieItem.objects.filter(
+                    bon_de_sortie__date__year=year,
+                    bon_de_commande_interne_item__produit=produit
+                ).aggregate(sum_quantite_accorde=Sum('quantite_accorde'))['sum_quantite_accorde'] or 0
+
+                # Update product stock if needed (assuming quantite_en_stock is a field on Produit)
+                quantite_logique = produit.quantite_en_stock
+                produit.save()
+
+                etat_inventaire_produit = EtatInventaireProduit.objects.create(
+                    produit=produit,
+                    quantite_physique=quantite_physique,
+                    observation=observation,
+                    quantite_logique=quantite_logique,  # Assuming this should reflect current stock
+                    N_inventaire=N_inventaire,
+                    quantite_entree=quantite_entree,
+                    quantite_sortie=quantite_sortie,
+                    reste=0
+                )
+                etat_inventaire_produits.append(etat_inventaire_produit)
 
         etat_inventaire = EtatInventaire.objects.create(**validated_data)
-
         etat_inventaire.produits.set(etat_inventaire_produits)
 
         return etat_inventaire
-
+########################
     def update(self, instance, validated_data):
         produits_data = validated_data.pop('produits')
 
-        # Update existing EtatInventaireProduit instances and add new ones
-        updated_produits = []
+        # Update existing EtatInventaireProduit instances
         for produit_data in produits_data:
             produit = produit_data.get('produit')
             quantite_physique = produit_data.get('quantite_physique')
@@ -186,33 +206,23 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
                     etat_inventaire_produit.quantite_physique = quantite_physique
                     etat_inventaire_produit.observation = observation
                     etat_inventaire_produit.N_inventaire = N_inventaire
+
+                    # Update any other fields in the EtatInventaireProduit instance
+                    # For example, if you have a field named "ecrat":
+                    etat_inventaire_produit.ecrat = produit_data.get('ecrat')
+
                     etat_inventaire_produit.save()
-                else:
-                    # Create a new EtatInventaireProduit instance if it doesn't exist
-                    etat_inventaire_produit = EtatInventaireProduit.objects.create(
-                        produit=produit,
-                        quantite_physique=quantite_physique,
-                        observation=observation,
-                        N_inventaire=N_inventaire,
-                        quantite_logique=produit.quantite_en_stock
-                    )
-
-                updated_produits.append(etat_inventaire_produit)
-
-                produit.quantite_en_stock = quantite_physique
-                produit.save()
 
         # Set the produits field of the instance with the updated_produits list
-        instance.produits.set(updated_produits)
+        instance.produits.set(list(EtatInventaireProduit.objects.filter(etatinventaire=instance)))
 
+        # Update other fields of the EtatInventaire instance
         instance.chapitre = validated_data.get('chapitre', instance.chapitre)
         instance.article = validated_data.get('article', instance.article)
         instance.etat = validated_data.get('etat', instance.etat)
         instance.save()
 
         return instance
-    
-
 class AdditionalInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdditionalInfo
