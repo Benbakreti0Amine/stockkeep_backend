@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from django.shortcuts import get_object_or_404
 from io import BytesIO
 from django.db.models import Sum
@@ -784,7 +785,10 @@ class GenerateEtatPDFView(views.APIView):
         bold_body_text_style.fontName = 'Helvetica-Bold'
         bold_body_text_style.fontSize = 10  # Increased font size
 
-
+        ttite1_text = f"<b>MINISTERE DE L'ENSEIGNEMENT SUPERIEUR ET DE LA RECHERCHE SCIENTIFIQUE</b>"
+        title_style = ParagraphStyle(name='Title', fontSize=10, leading=20, alignment=1)
+        title1 = Paragraph(ttite1_text, style=title_style)
+        elements.append(title1)
 
         elements.append(Paragraph("Identification du prestataire : ", bold_body_text_style))
         elements.append(Paragraph("", bold_body_text_style))
@@ -809,13 +813,15 @@ class GenerateEtatPDFView(views.APIView):
 
         # Add company_table to the document
         elements.append(company_table)
+        print(etat_inventaire.datetime)
+        formatted_datetime = etat_inventaire.datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-        title_text = f"<b>Inventaire arreté {etat_inventaire.id} au  {etat_inventaire.date}</b>"
-        ttite1_text = f"<b>MINISTERE DE L'ENSEIGNEMENT SUPERIEUR ET DE LA RECHERCHE SCIENTIFIQUE</b>"
+        title_text = f"<b>Inventaire arreté {etat_inventaire.id} au  {formatted_datetime}</b>"
+
         title_style = ParagraphStyle(name='Title', fontSize=10, leading=20, alignment=1)  # Define paragraph style
         title = Paragraph(title_text, style=title_style)
-        title1 = Paragraph(ttite1_text, style=title_style)
-        elements.append(title1)
+
+
         elements.append(title)
 
         # Add item information
@@ -825,7 +831,7 @@ class GenerateEtatPDFView(views.APIView):
         elements.append(Paragraph(" ", bold_body_text_style))
         item_data = [["N°","Designation", "N° D'inventaire", "Reste","Entrée","Sortie","Qantité Logique","Qantité Physique","Ecart", "Obs"]]
         for index, item in enumerate(items):
-            item_data.append([str(index+1), item.produit.designation, str(item.N_inventaire), str(item.reste), str(item.quantite_entree),str(item.quantite_sortie),str(item.quantite_physique),str(item.quantite_logique),str(item.observation),str(item.ecrat)])
+            item_data.append([str(index+1), item.produit.designation, str(item.N_inventaire), str(item.reste), str(item.quantite_entree),str(item.quantite_sortie),str(item.quantite_physique),str(item.quantite_logique),str(item.ecrat),str(item.observation)])
         # Define styles
         s = getSampleStyleSheet()["BodyText"]
         s.textColor = 'black'
@@ -845,7 +851,7 @@ class GenerateEtatPDFView(views.APIView):
             for row_index, row in enumerate(item_data)
         ]
        
-        items_table = Table(data2,colWidths=[30,170,80,20,20,20,20,20,20,80])
+        items_table = Table(data2,colWidths=[30,100,80,40,40,40,60,60,40,50])
         items_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0DC1DC')),
@@ -860,12 +866,18 @@ class GenerateEtatPDFView(views.APIView):
         elements.append(items_table)
 
 
-        # Add total information
+# Define paragraph styles with alignment
         right_aligned_style = ParagraphStyle(
             'RightAligned',
             fontSize=10,
             parent=bold_body_text_style,
             alignment=2
+        )
+        Middle_aligned_style = ParagraphStyle(
+            'MiddleAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=1
         )
         LEFT_aligned_style = ParagraphStyle(
             'LeftAligned',
@@ -877,12 +889,13 @@ class GenerateEtatPDFView(views.APIView):
         # Create paragraphs
         paragraphs = [
             Paragraph("LE MAGASINIER", right_aligned_style),
-            Paragraph("LE DIRECTEUR", LEFT_aligned_style)
+            Paragraph("", Middle_aligned_style),
+            Paragraph("LE DEMANDEUR", LEFT_aligned_style)
         ]
 
         # Create a table with a single row and three columns
         data = [paragraphs]
-        table = Table(data, colWidths=[4*inch, 4*inch])
+        table = Table(data, colWidths=[4*inch, 4*inch, 4*inch])
 
         # Add the table to elements
         elements.append(table)
