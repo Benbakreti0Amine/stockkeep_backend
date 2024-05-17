@@ -57,6 +57,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff    = models.BooleanField(default=False, null=False)
     role = models.ForeignKey(Role,on_delete=models.SET_NULL,null=True)
     image = models.ImageField(upload_to='images/', default='images/default_profile.jpg')
+    token = models.CharField(max_length=255, default="",blank=True, null=True)
 
 
    

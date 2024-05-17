@@ -94,7 +94,9 @@ class EtatInventaireDicProduitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EtatInventaireProduit
-        fields = ['produit', 'quantite_physique', 'observation','N_inventaire']
+        fields = ['produit','reste','quantite_entree','quantite_sortie', 'quantite_physique', 'quantite_logique', 'observation','N_inventaire','ecrat']
+        read_only = ['quantite_entree','quantite_sortie','quantite_logique','reste','ecrat']
+
 
 class EtatInventaireDirSerializer(serializers.ModelSerializer):
     chapitre = serializers.SlugRelatedField(queryset=Chapitre.objects.all(), slug_field="libelle")
@@ -104,6 +106,7 @@ class EtatInventaireDirSerializer(serializers.ModelSerializer):
     class Meta:
         model = EtatInventaire
         fields = ['id', 'datetime', 'chapitre', 'article', 'etat', 'produits']
+        read_only_fields = ['etat']
 
 
     def update(self, instance, validated_data):

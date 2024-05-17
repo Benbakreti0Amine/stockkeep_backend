@@ -4,11 +4,12 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+import requests
+import json
 from notifications.models import Notification
 from notifications.serializers import NotificationSerializer,Notification2Serializer
-
-
+from rest_framework.decorators import api_view
+from django.conf import settings
 class FetchUnreadNotifications(APIView):
     #permission_classes = [IsAuthenticated]
 
@@ -58,24 +59,39 @@ class DeleteNotification(APIView):
             return Response({"error": "Notification not found"}, status=status.HTTP_404_NOT_FOUND)
         
 
-from rest_framework.response import Response
-from fcm_django.models import FCMDevice
 
-class SendNotificationView(APIView):
-    def post(self, request, format=None):
-        serializer = Notification2Serializer(data=request.data)  # If using
-        if serializer.is_valid():
-            # Extract notification data (title, body, etc.)
-            notification_data = serializer.validated_data
+def send_fcm_notification(device_token, title, body, data=None):
+    # Firebase server key
+    server_key = settings.FCM_DJANGO_SETTINGS['FCM_SERVER_KEY']
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'key=' + server_key,
+    }
+    payload = {
+        'to': device_token,
+        'notification': {
+            'title': title,
+            'body': body,
+        },
+        'data': data if data else {}
+    }
+    response = requests.post('https://fcm.googleapis.com/fcm/send', headers=headers, data=json.dumps(payload))
+    return response.json()
 
-            # Get FCM device tokens from request data or elsewhere
-            device_tokens = request.data.get('device_tokens', [])
 
-            # Send notifications to devices
-            for device_token in device_tokens:
-                device = FCMDevice.objects.get(registration_id=device_token)
-                device.send_message(notification_data)
+@api_view(['POST'])
+def notify_user(request):
+    serializer = Notification2Serializer(data=request.data)
+    if serializer.is_valid():
+        title = serializer.validated_data['title']
+        body = serializer.validated_data['body']
+        data = serializer.validated_data.get('data', {})
+        device_token = request.data.get('device_tokens')
 
-            return Response({'message': 'Notifications sent successfully'})
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not device_token:
+            return Response({'error': 'Device token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = send_fcm_notification(device_token, title, body, data)
+        return Response(response, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
