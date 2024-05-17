@@ -760,3 +760,137 @@ class TopConsumedProductsByStructureView(View):
             })
 
         return JsonResponse(data, safe=False)
+    
+class GenerateEtatPDFView(views.APIView):
+     def get(self, request, etat_inventaire_id, *args, **kwargs):
+
+        try:
+            etat_inventaire = EtatInventaire.objects.get(id=etat_inventaire_id)
+        except EtatInventaire.DoesNotExist:
+            return Response({'message': 'Bon de commande not found'}, status=404)
+
+
+        items = etat_inventaire.produits.all()
+
+        # Create a PDF document
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+        elements = []
+
+        # Define styles
+        styles = getSampleStyleSheet()
+        bold_body_text_style = styles['BodyText']
+        bold_body_text_style.fontName = 'Helvetica-Bold'
+        bold_body_text_style.fontSize = 10  # Increased font size
+
+
+
+        elements.append(Paragraph("Identification du prestataire : ", bold_body_text_style))
+        elements.append(Paragraph("", bold_body_text_style))
+        # Add supplier information
+        data = [
+            ["sécrétariat général", ""],
+            ["sous-diréction des finances, de la comptabilité et des moyens", ""],
+            ["Service des moyens, de l'inventaire et des archives",""],
+        ]
+
+        # Create the table and add it to elements
+        company_table = Table(data , colWidths=[200, 200])
+
+        # Apply style to the table
+        company_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1),2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ]))
+
+        # Add company_table to the document
+        elements.append(company_table)
+
+        title_text = f"<b>Inventaire arreté {etat_inventaire.id} au  {etat_inventaire.date}</b>"
+        ttite1_text = f"<b>MINISTERE DE L'ENSEIGNEMENT SUPERIEUR ET DE LA RECHERCHE SCIENTIFIQUE</b>"
+        title_style = ParagraphStyle(name='Title', fontSize=10, leading=20, alignment=1)  # Define paragraph style
+        title = Paragraph(title_text, style=title_style)
+        title1 = Paragraph(ttite1_text, style=title_style)
+        elements.append(title1)
+        elements.append(title)
+
+        # Add item information
+        elements.append(Paragraph("Caractéristiques de la commande :", bold_body_text_style))
+        elements.append(Paragraph(f"<b>Chapitre :</b> {etat_inventaire.chapitre} ", title_style))
+        elements.append(Paragraph(f"<strong>Article :</strong> {etat_inventaire.article} ", title_style))
+        elements.append(Paragraph(" ", bold_body_text_style))
+        item_data = [["N°","Designation", "N° D'inventaire", "Reste","Entrée","Sortie","Qantité Logique","Qantité Physique","Ecart", "Obs"]]
+        for index, item in enumerate(items):
+            item_data.append([str(index+1), item.produit.designation, str(item.N_inventaire), str(item.reste), str(item.quantite_entree),str(item.quantite_sortie),str(item.quantite_physique),str(item.quantite_logique),str(item.observation),str(item.ecrat)])
+        # Define styles
+        s = getSampleStyleSheet()["BodyText"]
+        s.textColor = 'black'
+        s.wordWrap = 'CJK'
+        s.fontSize = 9
+
+        s2 = getSampleStyleSheet()["BodyText"]
+        s2.fontName = 'Helvetica-Bold'
+        s2.wordWrap='CJK'
+        s.fontSize = 9
+
+        print(item_data)
+
+        # Create data with styles
+        data2 = [
+            [Paragraph(cell, s2) if row_index == 0 else Paragraph(cell, s) for cell in row]
+            for row_index, row in enumerate(item_data)
+        ]
+       
+        items_table = Table(data2,colWidths=[30,170,80,20,20,20,20,20,20,80])
+        items_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0DC1DC')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+            ('WORDWRAP', (0, 0), (-1, -1), 'WORDWRAP'),  # Adjust right padding
+        ]))
+
+
+        elements.append(items_table)
+
+
+        # Add total information
+        right_aligned_style = ParagraphStyle(
+            'RightAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=2
+        )
+        LEFT_aligned_style = ParagraphStyle(
+            'LeftAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=0
+        )
+
+        # Create paragraphs
+        paragraphs = [
+            Paragraph("LE MAGASINIER", right_aligned_style),
+            Paragraph("LE DIRECTEUR", LEFT_aligned_style)
+        ]
+
+        # Create a table with a single row and three columns
+        data = [paragraphs]
+        table = Table(data, colWidths=[4*inch, 4*inch])
+
+        # Add the table to elements
+        elements.append(table)
+
+
+        # Build the PDF document
+        doc.build(elements)
+
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename=f'bondecommande_{etat_inventaire_id}.pdf')
+    

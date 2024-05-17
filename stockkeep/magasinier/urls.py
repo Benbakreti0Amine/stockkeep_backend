@@ -18,4 +18,5 @@ urlpatterns = [
     path('monthly-stock-data/',views.MonthlyStockDataView.as_view(), name='monthly-stock-data'),
     path('monthly-stock/<str:designation>/', views.FilteredMonthlyStockDataView.as_view(), name='filtered_monthly_stock_data'),
     path('top-consumed-products/<int:structure_id>/', views.TopConsumedProductsByStructureView.as_view(), name='top-consumed-products'), 
+    path('etatinventaire/<int:etat_inventaire_id>/pdf/', views.GenerateEtatPDFView.as_view(), name='etatpdf'), 
 ] 
