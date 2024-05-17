@@ -282,7 +282,7 @@ class GenerateBonDeSortiePDFView(views.APIView):
         except BonDeSortie.DoesNotExist:
             return Response({'message': 'Bon de reception not found'}, status=404)
 
-        Consommateur_id = bon_de_sortie.bon_de_commande_interne.Consommateur_id
+        Consommateur_id = bon_de_sortie.bon_de_commande_interne.user_id
         username = Consommateur_id.username
         email = Consommateur_id.email
 

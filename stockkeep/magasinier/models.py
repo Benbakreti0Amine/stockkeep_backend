@@ -1,5 +1,5 @@
 from django.db import models
-from Service_Achat.models import BonDeCommande, Produit
+from Service_Achat.models import BonDeCommande, Produit,Chapitre,Article
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 from users.models import User
 from django.db import transaction
@@ -90,12 +90,15 @@ class EtatInventaire(models.Model):
         ('Not Approuved', 'Non Approuved'),
 
     )
+    chapitre = models.ForeignKey(Chapitre, on_delete=models.CASCADE, related_name='etat_inventaires_chap')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='etat_inventaires_art')
     etat = models.CharField(max_length=150,choices=ETAT_CHOICES)
-    produits = models.ManyToManyField('EtatInventaireProduit')
+    produits = models.ManyToManyField('EtatInventaireProduit',related_name="etatinventaire")
 
 
 class EtatInventaireProduit(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE,related_name='produ')
+    N_inventaire = models.CharField(max_length=255)
     quantite_physique = models.IntegerField(default=0)
     quantite_logique = models.IntegerField(default=0)
     observation = models.TextField(blank=True)

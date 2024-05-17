@@ -9,3 +9,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
+
+class Notification2Serializer(serializers.Serializer):
+    title = serializers.CharField(max_length=100)
+    body = serializers.CharField(max_length=255)
+    data = serializers.JSONField(required=False) 

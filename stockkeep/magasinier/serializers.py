@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from Service_Achat.models import Produit
+from Service_Achat.models import Produit,Chapitre,Article
 
 from .models import BonDeReception, BonDeReceptionItem,EtatInventaireProduit,EtatInventaire 
 from .models import BonDeSortie, BonDeSortieItem,FicheMovement,AdditionalInfo
@@ -109,22 +109,25 @@ class EtatInventaireProduitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EtatInventaireProduit
-        fields = ['produit', 'quantite_physique', 'quantite_logique', 'observation']
+        fields = ['produit', 'quantite_physique', 'quantite_logique', 'observation','N_inventaire']
         read_only = ['quantite_logique']
 
+
 class EtatInventaireSerializer(serializers.ModelSerializer):
+    chapitre = serializers.SlugRelatedField(queryset=Chapitre.objects.all(), slug_field="libelle")
+    article = serializers.SlugRelatedField(queryset=Article.objects.all(), slug_field="designation")
     produits = EtatInventaireProduitSerializer(many=True)
 
     class Meta:
         model = EtatInventaire
-        fields = ['id','datetime', 'etat', 'produits']
+        fields = ['id', 'datetime', 'chapitre', 'article', 'etat', 'produits']
         read_only_fields = ['etat']
 
     def create(self, validated_data):
-
         produits_data = validated_data.pop('produits')
+        article = validated_data.get('article')
 
-        validated_data['etat'] = 'Not Approuved' 
+        validated_data['etat'] = 'Not Approuved'
 
         etat_inventaire_produits = []
 
@@ -132,56 +135,82 @@ class EtatInventaireSerializer(serializers.ModelSerializer):
             produit = produit_data.pop('produit')
             quantite_physique = produit_data.pop('quantite_physique')
             observation = produit_data.pop('observation')
+            N_inventaire = produit_data.pop('N_inventaire')
+
+            # Check if the product is associated with the article
+            if not produit.articles.filter(id=article.id).exists():
+                raise serializers.ValidationError(
+                    f"The product {produit.designation} is not associated with the article {article.designation}."
+                )
 
             if produit.quantite_en_stock <= 0:
-                raise serializers.ValidationError("The product {} has no stock available.".format(produit.designation))
+                raise serializers.ValidationError(
+                    f"The product {produit.designation} has no stock available."
+                )
 
-            # Check if the product is already associated with the EtatInventaire
             quantite_logique = produit.quantite_en_stock
             produit.save()
-            etat_inventaire_produit = EtatInventaireProduit.objects.create(produit=produit, quantite_physique=quantite_physique, observation=observation,quantite_logique=quantite_logique)
+            etat_inventaire_produit = EtatInventaireProduit.objects.create(
+                produit=produit, quantite_physique=quantite_physique, 
+                observation=observation, quantite_logique=quantite_logique,
+                N_inventaire=N_inventaire
+            )
             etat_inventaire_produits.append(etat_inventaire_produit)
 
         etat_inventaire = EtatInventaire.objects.create(**validated_data)
-        
-        # Add associated produits using set()
+
         etat_inventaire.produits.set(etat_inventaire_produits)
-        
+
         return etat_inventaire
-    
+
     def update(self, instance, validated_data):
         produits_data = validated_data.pop('produits')
 
         # Update existing EtatInventaireProduit instances and add new ones
+        updated_produits = []
         for produit_data in produits_data:
             produit = produit_data.get('produit')
             quantite_physique = produit_data.get('quantite_physique')
             observation = produit_data.get('observation')
-            
-            if produit and quantite_physique is not None:
+            N_inventaire = produit_data.get('N_inventaire')
 
-                # Update existing instance or create new one
-                etat_inventaire_produit, created = EtatInventaireProduit.objects.get_or_create(
+            if produit and quantite_physique is not None:
+                # Attempt to retrieve the existing EtatInventaireProduit instance
+                etat_inventaire_produit = EtatInventaireProduit.objects.filter(
                     produit=produit,
-                    defaults={'quantite_physique': quantite_physique, 'observation': observation}
-                )
-                if not created:
-                    # If the instance already existed, update its fields
+                    etatinventaire=instance
+                ).first()
+
+                if etat_inventaire_produit:
+                    # Update the existing EtatInventaireProduit instance
                     etat_inventaire_produit.quantite_physique = quantite_physique
                     etat_inventaire_produit.observation = observation
+                    etat_inventaire_produit.N_inventaire = N_inventaire
                     etat_inventaire_produit.save()
-                    produit.quantite_en_stock = quantite_physique
-                    produit.save()
-                instance.produits.add(etat_inventaire_produit)
+                else:
+                    # Create a new EtatInventaireProduit instance if it doesn't exist
+                    etat_inventaire_produit = EtatInventaireProduit.objects.create(
+                        produit=produit,
+                        quantite_physique=quantite_physique,
+                        observation=observation,
+                        N_inventaire=N_inventaire,
+                        quantite_logique=produit.quantite_en_stock
+                    )
 
-                # Update the quantite_en_stock of the product
+                updated_produits.append(etat_inventaire_produit)
+
                 produit.quantite_en_stock = quantite_physique
                 produit.save()
 
+        # Set the produits field of the instance with the updated_produits list
+        instance.produits.set(updated_produits)
+
+        instance.chapitre = validated_data.get('chapitre', instance.chapitre)
+        instance.article = validated_data.get('article', instance.article)
+        instance.etat = validated_data.get('etat', instance.etat)
         instance.save()
+
         return instance
-
-
     
 
 class AdditionalInfoSerializer(serializers.ModelSerializer):

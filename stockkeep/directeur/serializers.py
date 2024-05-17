@@ -5,7 +5,7 @@ from rest_framework import serializers
 from consommateur.models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
 from magasinier.models import EtatInventaireProduit,EtatInventaire
 from users.models import User
-from Service_Achat.models import Produit
+from Service_Achat.models import Produit,Chapitre,Article
 
 from rest_framework.validators import ValidationError
 
@@ -94,14 +94,16 @@ class EtatInventaireDicProduitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EtatInventaireProduit
-        fields = ['produit', 'quantite_physique', 'observation']
+        fields = ['produit', 'quantite_physique', 'observation','N_inventaire']
 
 class EtatInventaireDirSerializer(serializers.ModelSerializer):
+    chapitre = serializers.SlugRelatedField(queryset=Chapitre.objects.all(), slug_field="libelle")
+    article = serializers.SlugRelatedField(queryset=Article.objects.all(), slug_field="designation")
     produits = EtatInventaireDicProduitSerializer(many=True)
 
     class Meta:
         model = EtatInventaire
-        fields = ['id','datetime', 'etat', 'produits']
+        fields = ['id', 'datetime', 'chapitre', 'article', 'etat', 'produits']
 
 
     def update(self, instance, validated_data):
@@ -113,7 +115,6 @@ class EtatInventaireDirSerializer(serializers.ModelSerializer):
         for produit_data in produits_data:
             produit_id = produit_data.id
             quantite_physique = produit_data.quantite_physique
-            # Assuming you have a related field 'produit' in EtatInventaireDicProduitSerializer
             produit = instance.produits.get(id=produit_id).produit
             produit.quantite_en_stock = quantite_physique
             produit.save()
