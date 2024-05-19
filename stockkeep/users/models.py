@@ -77,3 +77,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     def str(self):
         return self.email
 
+class Entreprise(models.Model):
+    name = models.CharField(max_length=255)
+    logo = models.ImageField(upload_to='images/', default='images/default_profile.jpg')
+    email = models.EmailField(unique=True)
+    tva = models.CharField(max_length=20, unique=True)  # VAT number
+
+    def __str__(self):
+        return self.name

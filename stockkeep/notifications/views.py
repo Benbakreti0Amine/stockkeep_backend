@@ -62,7 +62,8 @@ class DeleteNotification(APIView):
 
 def send_fcm_notification(device_token, title, body, data=None):
     # Firebase server key
-    server_key = settings.FCM_DJANGO_SETTINGS['FCM_SERVER_KEY']
+    server_key = settings.FCM_SERVER_KEY
+    print (server_key)
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'key=' + server_key,
@@ -95,3 +96,9 @@ def notify_user(request):
         return Response(response, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_notifications(request):
+    notifications = Notification.objects.all()
+    serializer = NotificationSerializer(notifications, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

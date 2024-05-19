@@ -211,6 +211,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 # URL used to access the media
 MEDIA_URL = '/media/'
 
-FCM_DJANGO_SETTINGS = {
-    "FCM_SERVER_KEY": config("FCM_SERVER_KEY")
-}
+FCM_SERVER_KEY = config("FCM_SERVER_KEY")
