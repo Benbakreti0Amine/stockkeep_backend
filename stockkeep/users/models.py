@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
@@ -37,7 +36,6 @@ class MyUserManager(BaseUserManager):
         role = user.role
         if role is None:
             role = 'admin'
-        # Retrieve the corresponding Role instance from the database
         print(role)
         role_instance, _ = Role.objects.get_or_create(name=role)
         user.is_superuser = True
@@ -57,17 +55,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff    = models.BooleanField(default=False, null=False)
     role = models.ForeignKey(Role,on_delete=models.SET_NULL,null=True)
     image = models.ImageField(upload_to='images/', default='images/default_profile.jpg')
-    # image_link = models.CharField(max_length=255, blank=True, null=True)  # String link for the image
-
-    # # Optionally, if you want to keep the old image field data, you can define a migration to populate the image_link field.
-
-    # # Add a method to retrieve the image URL
-    # def get_image_url(self):
-    #     if self.image_link:
-    #         return self.image_link
-    #     else:
-    #         # Default image URL or any logic you want to use
-    #         return 'images/default_profile.jpg'
 
    
 

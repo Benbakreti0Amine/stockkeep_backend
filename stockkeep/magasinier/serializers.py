@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from Service_Achat.models import Produit
+from directeur.models import TicketSuiviCommande
 
 from .models import BonDeReception, BonDeReceptionItem,EtatInventaireProduit,EtatInventaire 
 from .models import BonDeSortie, BonDeSortieItem,BonDeCommandeInterneMeg,BonDeCommandeInterneMegaItem,FicheMovement,AdditionalInfo
@@ -47,20 +48,25 @@ class BonDeSortieSerializer(serializers.ModelSerializer):
         bon_de_commande_interne.save()
 
         items_data = validated_data.pop('items')
-        #print(f"5",items_data)
+
         bon_de_sortie = BonDeSortie.objects.create(bon_de_commande_interne=bon_de_commande_interne, **validated_data)
+        items_info = []
+
 
         for item_data in items_data:
             bon_de_commande_interne_item = item_data.get('bon_de_commande_interne_item')
-            #print(f"14",bon_de_commande_interne_item)
+
             bon_de_commande_interne_item_id = bon_de_commande_interne_item.id  # Extract identifier
-            #print(bon_de_commande_interne_item_id)
+
             quantite_accorde = item_data.get('quantite_accorde')
             bon_de_commande_interne_item = BonDeCommandeInterneItem.objects.get(pk=bon_de_commande_interne_item_id)
-            #print(bon_de_commande_interne_item )
+
             bon_de_commande_interne_item.quantite_accorde = quantite_accorde
             bon_de_commande_interne_item.save()
             BonDeSortieItem.objects.create(bon_de_sortie=bon_de_sortie, **item_data)
+            items_info.append({'item': bon_de_commande_interne_item.produit.designation, 'quantite': quantite_accorde})
+
+        TicketSuiviCommande.create_ticket(bon_de_commande=bon_de_commande_interne, etape='magasinier', items_info=items_info)
 
             
 

@@ -54,7 +54,7 @@ class BonDeCommandeInterneItemSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field='designation')
     class Meta:
         model = BonDeCommandeInterneItem
-        fields = ['id', 'produit','quantite_demandee',]
+        fields = ['id', 'produit','quantite_demandee','quantite_accorde']
 
 class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
     items = BonDeCommandeInterneItemSerializer(many=True)  # Nested relationship field

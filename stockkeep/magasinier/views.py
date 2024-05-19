@@ -21,36 +21,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
 from reportlab.lib.styles import ParagraphStyle,getSampleStyleSheet
 from reportlab.lib.units import inch
 
-# from django.http import JsonResponse
-# from django.views import View
-# from django.utils.dateformat import DateFormat
-# from django.db.models import Sum
-# from .models import Produit, BonDeSortieItem
 
-# class StockDataView(View):
-#     def get(self, request):
-#         data = []
 
-#         produits = Produit.objects.all()
-#         for produit in produits:
-#             # Calculate the quantity consumed
-#             quantity_consumed = BonDeSortieItem.objects.filter(
-#                 bon_de_commande_interne_item__produit=produit,
-#                 bon_de_sortie__type='Supply'
-#             ).aggregate(total_consumed=Sum('quantite_accorde'))['total_consumed'] or 0
-
-#             item = {
-#                 "id_produit": str(produit.id),
-#                 "quantity_in_stock": produit.quantite_en_stock,
-#                 "designation": produit.designation,
-#                 "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
-#                 "quantity_consumed": quantity_consumed,
-#                 "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example              
-#             }
-#             #"date": DateFormat(produit.date).format('Y-m-d') if produit.date else 'N/A'
-#             data.append(item)
-
-#         return JsonResponse(data, safe=False)
 from django.http import JsonResponse
 from django.views import View
 from django.db.models import Sum, F

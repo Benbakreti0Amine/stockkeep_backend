@@ -4,7 +4,6 @@ from consommateur.models import BonDeCommandeInterne
 from magasinier.models import EtatInventaire
 from directeur.models import TicketSuiviCommande
 from .serializers import BonDeCommandeInterneDicSerializer,EtatInventaireDirSerializer, TicketSuiviCommandeSerializer
-# Create your views here.
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -29,11 +28,7 @@ class TicketListView(generics.ListAPIView):
     queryset = TicketSuiviCommande.objects.all()
     serializer_class = TicketSuiviCommandeSerializer
 
-# class TicketSearchView(APIView):
-#     def get(self, request, bon_de_commande_id):
-#         tickets = TicketSuiviCommande.objects.filter(bon_de_commande_id=bon_de_commande_id)
-#         serializer = TicketSuiviCommandeSerializer(tickets, many=True)
-#         return Response(serializer.data)
+
     
 class TicketSearchView(APIView):
     def get(self, request, bon_de_commande_id):
