@@ -44,10 +44,11 @@ class BonDeCommandeInterneRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BonDeCommandeInterne.objects.all()
     serializer_class = BonDeCommandeInterneSerializer
 
+
 def bci_statistics_for_consommateur(request, id):
     # Get the consommateur object or return 404 if not found
     consommateur = get_object_or_404(Consommateur, id=id)
-    
+
     # Query BCIs for the specified consommateur
     bc_interne = BonDeCommandeInterne.objects.filter(Consommateur_id=consommateur)
 
@@ -64,7 +65,7 @@ def bci_statistics_for_consommateur(request, id):
                 'month_name': month_name,
                 'count': 0
             }
-        
+
         stats[month_year]['count'] += 1
 
     # Convert stats dictionary to a list of dictionaries for JSON response

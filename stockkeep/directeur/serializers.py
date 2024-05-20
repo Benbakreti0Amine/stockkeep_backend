@@ -5,7 +5,7 @@ from rest_framework import serializers
 from consommateur.models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
 from magasinier.models import EtatInventaireProduit,EtatInventaire
 from users.models import User
-from Service_Achat.models import Produit
+from Service_Achat.models import Produit,Chapitre,Article
 
 from rest_framework.validators import ValidationError
 
@@ -62,7 +62,7 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
+        fields = ['id', 'user_id', 'items', 'status','type', 'date']
 
     def update(self, instance, validated_data):
 
@@ -83,30 +83,47 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
                     item.save()
 
         items_info = [{'item': item.produit.designation, 'quantite': item.quantite_accorde} for item in instance.items.all()]
-        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='directeur', items_info=items_info)             
+        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='directeur', items_info=items_info) 
         instance.save()
         return instance    
     
+
+
 class EtatInventaireDicProduitSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset = Produit.objects.all(), slug_field="designation")
 
     class Meta:
         model = EtatInventaireProduit
-        fields = ['produit', 'quantite_physique', 'observation']
+        fields = ['produit','reste','quantite_entree','quantite_sortie', 'quantite_physique', 'quantite_logique', 'observation','N_inventaire','ecrat']
+        read_only = ['quantite_entree','quantite_sortie','quantite_logique','reste','ecrat']
+
 
 class EtatInventaireDirSerializer(serializers.ModelSerializer):
+    chapitre = serializers.SlugRelatedField(queryset=Chapitre.objects.all(), slug_field="libelle")
+    article = serializers.SlugRelatedField(queryset=Article.objects.all(), slug_field="designation")
     produits = EtatInventaireDicProduitSerializer(many=True)
 
     class Meta:
         model = EtatInventaire
-        fields = ['id','datetime', 'etat', 'produits']
+        fields = ['id', 'datetime', 'chapitre', 'article', 'etat', 'produits']
+        read_only_fields = ['etat']
 
 
     def update(self, instance, validated_data):
         instance = super().update(instance, validated_data)
         instance.etat = "Approuved"
         instance.save()
+
+        produits_data = instance.produits.all()
+        for produit_data in produits_data:
+            produit_id = produit_data.id
+            quantite_physique = produit_data.quantite_physique
+            produit = instance.produits.get(id=produit_id).produit
+            produit.quantite_en_stock = quantite_physique
+            produit.save()
+
         return instance
+    
 
 class TicketSuiviCommandeSerializer(serializers.ModelSerializer):
     class Meta:

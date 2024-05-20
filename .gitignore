@@ -5,7 +5,7 @@
 __pycache__
 db.sqlite3
 mediafiles
-
+serviceAccountKey.json
 # Backup files # 
 *.bak 
 
@@ -100,6 +100,7 @@ celerybeat-schedule.*
 # Environments 
 myenv
 .env
+serviceAccountKey.json
 
 # mkdocs documentation 
 /site 

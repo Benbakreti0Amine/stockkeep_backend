@@ -42,7 +42,7 @@ class BonDeCommandeInterneItem(models.Model):
         return f"{self.produit} - {self.quantite_demandee}"
 
 class BonDeCommandeInterne(models.Model):
-    Consommateur_id = models.ForeignKey(Consommateur, on_delete=models.CASCADE, related_name='bonDeiommandeinternes')
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bonDeiommandeinternes')
     date = models.DateField(auto_now_add=True)
     STATUS_CHOICES = (
         ('Created succesfully', 'Created succesfully'),
@@ -57,10 +57,10 @@ class BonDeCommandeInterne(models.Model):
     )
     status = models.CharField(max_length=40, choices=STATUS_CHOICES)
     type = models.CharField(max_length=40, choices=TYPE_CHOICES)
-    items = models.ManyToManyField(BonDeCommandeInterneItem,related_name='items')
+    items = models.ManyToManyField(BonDeCommandeInterneItem, related_name='items')
 
     def __str__(self):
-        return f"Commande {self.id} - {self.Consommateur_id} - {self.date}"
+        return f"Commande {self.id} - {self.user_id} - {self.date}"
 
 
     

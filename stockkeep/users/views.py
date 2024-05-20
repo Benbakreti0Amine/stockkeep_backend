@@ -4,8 +4,8 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from role.models import RolePermission
 from users.tokens import create_jwt_pair_for_user
-from .models import User
-from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,PermissionSerializer
+from .models import User,Entreprise
+from .serializers import NewPasswordSerializer, UserSerializer,ResetPasswordEmailSerializer,ResetPasswordSerializer,PermissionSerializer,EntrepriseSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -197,3 +197,11 @@ class PermissionsCodenameView(APIView):
             return Response({"permissions": filtered_permissions}, status=status.HTTP_200_OK)
 
         return Response({"detail": "User is not a superuser."}, status=status.HTTP_403_FORBIDDEN)
+
+class EntrepriseListCreateView(generics.ListCreateAPIView):
+    queryset = Entreprise.objects.all()
+    serializer_class = EntrepriseSerializer
+
+class EntrepriseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Entreprise.objects.all()
+    serializer_class = EntrepriseSerializer

@@ -1,5 +1,5 @@
 from django.db import models
-from Service_Achat.models import BonDeCommande, Produit
+from Service_Achat.models import BonDeCommande, Produit,Chapitre,Article
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 from users.models import User
 from django.db import transaction
@@ -54,7 +54,8 @@ class BonDeReceptionItem(models.Model):
 
 class BonDeSortie(models.Model):
     bon_de_commande_interne = models.ForeignKey(BonDeCommandeInterne, on_delete=models.CASCADE)
-    date = models.DateField(default=date(2024, 4, 3))
+    date = models.DateField(auto_now_add=True)
+    # date = models.DateField(default=date(2024, 4, 3))
     TYPE_CHOICES = (
         ('Supply', 'Supply'),
         ('Decharge', 'Decharge'),
@@ -70,6 +71,9 @@ class BonDeSortieItem(models.Model):
     observation = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
+        
+        super().save(*args, **kwargs)
+
         with transaction.atomic():
             # If the type is "Decharge", subtract quantite_accorde from quantite_en_stock of Produit
             if self.bon_de_sortie.type == 'Supply':
@@ -80,9 +84,6 @@ class BonDeSortieItem(models.Model):
                 produit.quantite_en_stock -= self.quantite_accorde
                 produit.save()
 
-        # Call save method of the superclass
-        super().save(*args, **kwargs)
-
 class EtatInventaire(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     ETAT_CHOICES = (
@@ -90,47 +91,27 @@ class EtatInventaire(models.Model):
         ('Not Approuved', 'Non Approuved'),
 
     )
+    chapitre = models.ForeignKey(Chapitre, on_delete=models.CASCADE, related_name='etat_inventaires_chap')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='etat_inventaires_art')
     etat = models.CharField(max_length=150,choices=ETAT_CHOICES)
-    produits = models.ManyToManyField('EtatInventaireProduit')
+    produits = models.ManyToManyField('EtatInventaireProduit',related_name="etatinventaire")
 
 
 class EtatInventaireProduit(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE,related_name='produ')
+    N_inventaire = models.CharField(max_length=255)
+    reste = models.IntegerField(default=0)
+    quantite_entree = models.IntegerField(default=0)
+    quantite_sortie = models.IntegerField(default=0)
     quantite_physique = models.IntegerField(default=0)
     quantite_logique = models.IntegerField(default=0)
     observation = models.TextField(blank=True)
+    ecrat = models.IntegerField(blank=True)
 
-class BonDeCommandeInterneMegaItem(models.Model):
-    produit = models.ForeignKey(Produit, on_delete=models.CASCADE,related_name='pro')
-    quantite_demandee = models.PositiveIntegerField(null=True)
-    quantite_accorde = models.PositiveIntegerField(null=True)
-
-    def __str__(self):
-        return f"{self.produit} - {self.quantite_demandee}"
-    
-
-class BonDeCommandeInterneMeg(models.Model):  
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_id')
-    date = models.DateField(auto_now_add=True)
-    STATUS_CHOICES = (
-        ('Created succesfully', 'Created succesfully'),
-        ('Consulted by the responsable', 'Consulted by the responsable'),
-        ('Consulted by the director', 'Consulted by the director'),
-        ('Delivered', 'Delivered'),
-        ('External Discharge', 'External Discharge'),
-    )
-    TYPE_CHOICES = (
-        ('Supply', 'Supply'),
-        ('Decharge', 'Decharge'),
-    )
-    status = models.CharField(max_length=40, choices=STATUS_CHOICES)
-    type = models.CharField(max_length=40, choices=TYPE_CHOICES)
-    items = models.ManyToManyField(BonDeCommandeInterneMegaItem)
-
-
-    def __str__(self):
-        return f"Commande {self.id} - {self.Consommateur_id} - {self.date}"
-    
+    def save(self, *args, **kwargs):
+        """Overrides the default save method to calculate difference."""
+        self.ecrat = self.quantite_logique - self.quantite_physique  
+        super().save(*args, **kwargs) 
 
 
 class AdditionalInfo(models.Model):

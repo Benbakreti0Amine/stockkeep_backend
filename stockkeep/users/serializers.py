@@ -3,7 +3,7 @@ from rest_framework.validators import ValidationError
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from role.models import Role
-from .models import User
+from .models import User,Entreprise
 from django.contrib.auth.models import Permission
 
 class UserSerializer(serializers.ModelSerializer):
@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username','password', 'email', 'first_name', 'last_name', 'is_active','password','role','image']
+        fields = ['id', 'username','password', 'email', 'first_name', 'last_name', 'is_active','password','role','image','token']
 
 
     def validate(self, attrs):
@@ -96,3 +96,8 @@ class PermissionSerializer(serializers.ModelSerializer):
             "add_contenttype","change_contenttype","delete_contenttype","view_contenttype"]:
             return None  # Skip this permission
         return data
+    
+class EntrepriseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entreprise
+        fields = ['id', 'name', 'logo', 'email', 'tva']

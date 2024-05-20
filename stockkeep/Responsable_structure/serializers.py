@@ -17,7 +17,7 @@ class BonDeCommandeInterneResSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
+        fields = ['id', 'user_id', 'items', 'status','type', 'date']
 
     def update(self, instance, validated_data):
 
@@ -37,9 +37,9 @@ class BonDeCommandeInterneResSerializer(serializers.ModelSerializer):
                 for item in items:
                     item.quantite_accorde = quantite_accorde
                     item.save()
-
+                    
         items_info = [{'item': item.produit.designation, 'quantite': item.quantite_accorde} for item in instance.items.all()]
-        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='responsable', items_info=items_info)           
+        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='responsable', items_info=items_info)        
         instance.save()
         return instance    
 

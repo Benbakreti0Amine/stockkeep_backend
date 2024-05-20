@@ -12,11 +12,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Structure',
+            name='Notification',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('abbreviation', models.CharField(max_length=10, unique=True)),
+                ('message', models.CharField(max_length=255)),
+                ('timestamp', models.DateTimeField(auto_now_add=True)),
+                ('read_status', models.BooleanField(default=False)),
+                ('titre', models.CharField(max_length=255)),
             ],
         ),
     ]

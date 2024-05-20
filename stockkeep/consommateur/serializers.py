@@ -5,7 +5,7 @@ from rest_framework import serializers
 from .models import Consommateur,BonDeCommandeInterneItem,BonDeCommandeInterne
 from users.models import User
 from Service_Achat.models import Produit
-
+from directeur.models import TicketSuiviCommande
 from rest_framework.validators import ValidationError
 
 class UserSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Consommateur
-        fields = ['id', 'username','password', 'email', 'first_name', 'last_name', 'is_active','structure','role','image']
+        fields = ['id', 'username','password', 'email', 'first_name', 'last_name', 'is_active','structure','role','image','token']
         ref_name = 'ConsommateurUser'
 
     def to_representation(self,instance):
@@ -61,7 +61,7 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeCommandeInterne
-        fields = ['id', 'Consommateur_id', 'items', 'status','type', 'date']
+        fields = ['id', 'user_id', 'items', 'status','type', 'date']
         read_only_fields = ['status']  # Mark status field as read-only
 
     def create(self, validated_data):
@@ -85,7 +85,6 @@ class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
         items_info = [{'item': item['produit'].designation, 'quantite': item['quantite_demandee']} for item in items_data]
         
         TicketSuiviCommande.objects.create(bon_de_commande=bon_de_commande, etape='consommateur', items=items_info)
-
         return bon_de_commande
 
 

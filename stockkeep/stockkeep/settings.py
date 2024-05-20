@@ -14,6 +14,7 @@ from datetime import timedelta
 from pathlib import Path
 from decouple import config
 import os
+from dotenv import load_dotenv
 
 from dotenv import load_dotenv
 
@@ -54,6 +55,9 @@ INSTALLED_APPS = [
     'magasinier',
     'Responsable_structure',
     'directeur',
+    'channels',
+    'notifications',
+    'fcm_django',
 
 ]
 
@@ -68,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'magasinier.middleware.RequestMiddleware',
 ]
 
 ROOT_URLCONF = 'stockkeep.urls'
@@ -110,41 +115,68 @@ TEMPLATES = [
 WSGI_APPLICATION = 'stockkeep.wsgi.application'
 
 
-# # Database
-# # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-# load_dotenv()
+# Database
+# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+load_dotenv()
 
-# if 'SUPABASE_URL' in os.environ and 'SUPABASE_KEY' in os.environ:
-#     # Use Supabase settings
-#     SUPABASE_URL = os.environ['SUPABASE_URL']
-#     SUPABASE_KEY = os.environ['SUPABASE_KEY']
+if 'SUPABASE_URL' in os.environ and 'SUPABASE_KEY' in os.environ:
+    # Use Supabase settings
+    SUPABASE_URL = os.environ['SUPABASE_URL']
+    SUPABASE_KEY = os.environ['SUPABASE_KEY']
 
-#     # Configure Django database settings for Supabase PostgreSQL
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': os.environ['SUPABASE_DB_NAME'],      # Your Supabase database name
-#             'USER': os.environ['SUPABASE_DB_USER'],      # Your Supabase database user
-#             'PASSWORD': os.environ['SUPABASE_DB_PASSWORD'],  # Your Supabase database password
-#             'HOST': os.environ['SUPABASE_DB_HOST'],      # Your Supabase database host
-#             'PORT': os.environ['SUPABASE_DB_PORT'],      # Your Supabase database port
-#         }
-#     }
-# else:
-#     # Use default SQLite settings (you can customize these as needed)
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#         }
-#     }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    # Configure Django database settings for Supabase PostgreSQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ['SUPABASE_DB_NAME'],      # Your Supabase database name
+            'USER': os.environ['SUPABASE_DB_USER'],      # Your Supabase database user
+            'PASSWORD': os.environ['SUPABASE_DB_PASSWORD'],  # Your Supabase database password
+            'HOST': os.environ['SUPABASE_DB_HOST'],      # Your Supabase database host
+            'PORT': os.environ['SUPABASE_DB_PORT'],      # Your Supabase database port
+        }
     }
-}
+else:
+    # Use default SQLite settings (you can customize these as needed)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+
+
+load_dotenv()
+
+if 'SUPABASE_URL' in os.environ and 'SUPABASE_KEY' in os.environ:
+    # Use Supabase settings
+    SUPABASE_URL = os.environ['SUPABASE_URL']
+    SUPABASE_KEY = os.environ['SUPABASE_KEY']
+
+    # Configure Django database settings for Supabase PostgreSQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ['SUPABASE_DB_NAME'],      # Your Supabase database name
+            'USER': os.environ['SUPABASE_DB_USER'],      # Your Supabase database user
+            'PASSWORD': os.environ['SUPABASE_DB_PASSWORD'],  # Your Supabase database password
+            'HOST': os.environ['SUPABASE_DB_HOST'],      # Your Supabase database host
+            'PORT': os.environ['SUPABASE_DB_PORT'],      # Your Supabase database port
+        }
+    }
+else:
+    # Use default SQLite settings (you can customize these as needed)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
@@ -206,3 +238,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
 
 # URL used to access the media
 MEDIA_URL = '/media/'
+
+FCM_SERVER_KEY = config("FCM_SERVER_KEY")

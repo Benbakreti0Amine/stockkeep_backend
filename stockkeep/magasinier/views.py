@@ -1,4 +1,4 @@
-import json
+from datetime import datetime, timezone
 from django.shortcuts import get_object_or_404
 from io import BytesIO
 from django.db.models import Sum
@@ -12,7 +12,7 @@ from .models import BonDeReception, BonDeReceptionItem
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem, Consommateur
 from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer
 from .serializers import BonDeCommandeInterneMagaSerializer, EtatInventaireSerializer,FicheMovementSerializer,AdditionalInfoSerializer
-from .models import BonDeReception, BonDeReceptionItem,BonDeSortie,EtatInventaire, BonDeSortieItem,BonDeCommandeInterneMeg,FicheMovement
+from .models import BonDeReception, BonDeReceptionItem,BonDeSortie,EtatInventaire, BonDeSortieItem,FicheMovement
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
 
@@ -21,153 +21,12 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
 from reportlab.lib.styles import ParagraphStyle,getSampleStyleSheet
 from reportlab.lib.units import inch
 
-
-
 from django.http import JsonResponse
 from django.views import View
-from django.db.models import Sum, F
 from django.db.models.functions import ExtractMonth, ExtractYear
 from .models import Produit, BonDeSortieItem
 import calendar
-
-class MonthlyStockDataView(View):
-    def get(self, request):
-        data = []
-        
-        # Annotate BonDeSortieItem with month and year
-        items = BonDeSortieItem.objects.annotate(
-            month=ExtractMonth('bon_de_sortie__date'),
-            year=ExtractYear('bon_de_sortie__date')
-        )
-
-        # Get list of all products
-        produits = Produit.objects.all()
-        
-        # Iterate through each product
-        for produit in produits:
-            # Filter items related to the current product
-            #items hiya bon de sortieeee
-
-            product_items = items.filter(
-                bon_de_commande_interne_item__produit=produit,
-                bon_de_sortie__type='Supply'
-            ).values('month', 'year').annotate(
-                total_consumed=Sum('quantite_accorde')
-            ).order_by('year', 'month')
-
-            # Iterate through each month and aggregate data
-            for item in product_items:
-                month_name = calendar.month_name[item['month']]
-                quantity_consumed = item['total_consumed'] or 0
-                quantity_in_stock = produit.quantite_en_stock  # Assume you want the latest stock value
-
-                data.append({
-                    "designation": produit.designation,
-                    "month": month_name,
-                    "year": item['year'],
-                    "quantity_in_stock": quantity_in_stock,
-                    "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
-                    "quantity_consumed": quantity_consumed,
-                    "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example
-                })
-
-        return JsonResponse(data, safe=False)
-class FilteredMonthlyStockDataView(View):
-    def get(self, request, designation):
-        data = []
-        
-        # Annotate BonDeSortieItem with month and year
-        items = BonDeSortieItem.objects.annotate(
-            month=ExtractMonth('bon_de_sortie__date'),
-            year=ExtractYear('bon_de_sortie__date')
-        )
-
-        # Get the specific product by designation
-        try:
-            produit = Produit.objects.get(designation=designation)
-        except Produit.DoesNotExist:
-            return JsonResponse({"error": "Product not found"}, status=404)
-
-        # Filter items related to the specific product
-        product_items = items.filter(
-            bon_de_commande_interne_item__produit=produit,
-            bon_de_sortie__type='Supply'
-        ).values('month', 'year').annotate(
-            total_consumed=Sum('quantite_accorde')
-        ).order_by('year', 'month')
-
-        # Iterate through each month and aggregate data
-        for item in product_items:
-            month_name = calendar.month_name[item['month']]
-            quantity_consumed = item['total_consumed'] or 0
-            quantity_in_stock = produit.quantite_en_stock  # Assume you want the latest stock value
-
-            data.append({
-                "designation": produit.designation,
-                "month": month_name,
-                "year": item['year'],
-                "quantity_in_stock": quantity_in_stock,
-                "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
-                "quantity_consumed": quantity_consumed,
-                "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example
-            })
-
-        return JsonResponse(data, safe=False)
-class FilteredStockDataView(View):
-    def get(self, request):
-        # Get the designation query parameter
-        designation = request.GET.get('designation', None)
-
-        # Get the full data from the MonthlyStockDataView
-        full_data_view = MonthlyStockDataView()
-        full_data_response = full_data_view.get(request)
-        full_data = full_data_response.content.decode('utf-8')
-        full_data = json.loads(full_data)
-
-        # Filter the data by designation if provided
-        if designation:
-            filtered_data = [entry for entry in full_data if entry['designation'] == designation]
-        else:
-            filtered_data = full_data
-
-        return JsonResponse(filtered_data, safe=False)
-    
-class TopConsumedProductsByStructureView(View):
-    def get(self, request, structure_id):
-        # Get the consommateurs related to the given structure
-        consommateurs = Consommateur.objects.filter(structure_id=structure_id)
-        print('///////////////////////////////////////////////////////////')
-        print(consommateurs)
-        consommateur_ids = [consommateur.id for consommateur in consommateurs]
-        print(consommateur_ids)
-        
-        # print(BonDeSortieItem.objects.bon_de_commande_interne_item__produit__designation)
-        # Get the related BonDeSortieItems
-        consumed_data = BonDeSortieItem.objects.filter(
-            bon_de_sortie__type='Supply',
-            bon_de_commande_interne_item__items__Consommateur_id__in=consommateur_ids
-        ).values(
-            'bon_de_commande_interne_item__produit__designation',
-            'bon_de_commande_interne_item__produit__quantite_en_stock'
-        ).annotate(
-            total_consumed=Sum('quantite_accorde')
-        ).order_by('-total_consumed')  # Sort by consumed quantity in descending order
-
-        # Prepare the response data
-        data = []
-        for item in consumed_data:
-            designation = item['bon_de_commande_interne_item__produit__designation']
-            consumed = item['total_consumed']
-            remaining = item['bon_de_commande_interne_item__produit__quantite_en_stock']
-
-            data.append({
-                'designation': designation,
-                'consumed': consumed,
-                'remaining': remaining,
-                'remaining_color': 'red' if remaining <= 10 else 'green'  # Change color based on remaining quantity
-            })
-
-        return JsonResponse(data, safe=False)
+import json
 
 class GenerateReceipt(APIView):
     def post(self, request):
@@ -412,7 +271,7 @@ class BonDeSortieListView(generics.ListAPIView):
     serializer_class = BonDeSortieSerializer
 
 class BonDeCommandeInterneListCreateView(generics.ListCreateAPIView):
-    queryset = BonDeCommandeInterneMeg.objects.all()
+    queryset = BonDeCommandeInterne.objects.all()
     serializer_class = BonDeCommandeInterneMagaSerializer
 
 class GenerateBonDeSortiePDFView(views.APIView):
@@ -423,7 +282,7 @@ class GenerateBonDeSortiePDFView(views.APIView):
         except BonDeSortie.DoesNotExist:
             return Response({'message': 'Bon de reception not found'}, status=404)
 
-        Consommateur_id = bon_de_sortie.bon_de_commande_interne.Consommateur_id
+        Consommateur_id = bon_de_sortie.bon_de_commande_interne.user_id
         username = Consommateur_id.username
         email = Consommateur_id.email
 
@@ -596,7 +455,7 @@ class GenerateFichMouv(APIView):
                     'numero_bon': str(sortie.bon_de_sortie.id),
                     'quantite_sortie': sortie.quantite_accorde,
                     'observations': sortie.observation,
-                    'consommateur':str(bon_de_sortie.bon_de_commande_interne.Consommateur_id),
+                    'consommateur':str(bon_de_sortie.bon_de_commande_interne.user_id),
                     'date_sortie':bon_de_sortie.date
                 })
 
@@ -760,3 +619,290 @@ class GenerateFicheDeMouvementPDFView(views.APIView):
 
         buffer.seek(0)
         return FileResponse(buffer, as_attachment=True, filename=f'fiche_de_mouvement{fiche_de_mouvement_id}.pdf')
+    
+class MonthlyStockDataView(View):
+    def get(self, request):
+        data = []
+
+        # Annotate BonDeSortieItem with month and year
+        items = BonDeSortieItem.objects.annotate(
+            month=ExtractMonth('bon_de_sortie__date'),
+            year=ExtractYear('bon_de_sortie__date')
+        )
+
+        # Get list of all products
+        produits = Produit.objects.all()
+
+        # Iterate through each product
+        for produit in produits:
+            # Filter items related to the current product
+            #items hiya bon de sortieeee
+
+            product_items = items.filter(
+                bon_de_commande_interne_item__produit=produit,
+                bon_de_sortie__type='Supply'
+            ).values('month', 'year').annotate(
+                total_consumed=Sum('quantite_accorde')
+            ).order_by('year', 'month')
+
+            # Iterate through each month and aggregate data
+            for item in product_items:
+                month_name = calendar.month_name[item['month']]
+                quantity_consumed = item['total_consumed'] or 0
+                quantity_in_stock = produit.quantite_en_stock  # Assume you want the latest stock value
+
+                data.append({
+                    "designation": produit.designation,
+                    "month": month_name,
+                    "year": item['year'],
+                    "quantity_in_stock": quantity_in_stock,
+                    "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
+                    "quantity_consumed": quantity_consumed,
+                    "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example
+                })
+
+        return JsonResponse(data, safe=False)
+    
+class FilteredMonthlyStockDataView(View):
+    def get(self, request, designation):
+        data = []
+
+        # Annotate BonDeSortieItem with month and year
+        items = BonDeSortieItem.objects.annotate(
+            month=ExtractMonth('bon_de_sortie__date'),
+            year=ExtractYear('bon_de_sortie__date')
+        )
+
+        # Get the specific product by designation
+        try:
+            produit = Produit.objects.get(designation=designation)
+        except Produit.DoesNotExist:
+            return JsonResponse({"error": "Product not found"}, status=404)
+
+        # Filter items related to the specific product
+        product_items = items.filter(
+            bon_de_commande_interne_item__produit=produit,
+            bon_de_sortie__type='Supply'
+        ).values('month', 'year').annotate(
+            total_consumed=Sum('quantite_accorde')
+        ).order_by('year', 'month')
+
+        # Iterate through each month and aggregate data
+        for item in product_items:
+            month_name = calendar.month_name[item['month']]
+            quantity_consumed = item['total_consumed'] or 0
+            quantity_in_stock = produit.quantite_en_stock  # Assume you want the latest stock value
+
+            data.append({
+                "designation": produit.designation,
+                "month": month_name,
+                "year": item['year'],
+                "quantity_in_stock": quantity_in_stock,
+                "quantity_in_stock_color": "hsl(335, 70%, 50%)",  # Static color as per your example
+                "quantity_consumed": quantity_consumed,
+                "quantity_consumed_color": "hsl(101, 70%, 50%)",  # Static color as per your example
+            })
+
+        return JsonResponse(data, safe=False)
+    
+class FilteredStockDataView(View):
+    def get(self, request):
+        # Get the designation query parameter
+        designation = request.GET.get('designation', None)
+
+        # Get the full data from the MonthlyStockDataView
+        full_data_view = MonthlyStockDataView()
+        full_data_response = full_data_view.get(request)
+        full_data = full_data_response.content.decode('utf-8')
+        full_data = json.loads(full_data)
+
+        # Filter the data by designation if provided
+        if designation:
+            filtered_data = [entry for entry in full_data if entry['designation'] == designation]
+        else:
+            filtered_data = full_data
+
+        return JsonResponse(filtered_data, safe=False)
+
+class TopConsumedProductsByStructureView(View):
+    def get(self, request, structure_id):
+        # Get the consommateurs related to the given structure
+        consommateurs = Consommateur.objects.filter(structure=structure_id)
+        print('///////////////////////////////////////////////////////////')
+        print(consommateurs)
+        consommateur_ids = [consommateur.id for consommateur in consommateurs]
+        print(consommateur_ids)
+
+        # print(BonDeSortieItem.objects.bon_de_commande_interne_item__produit__designation)
+        # Get the related BonDeSortieItems
+        consumed_data = BonDeSortieItem.objects.filter(
+            bon_de_sortie__type='Supply',
+            bon_de_commande_interne_item__items__user_id__in=consommateur_ids
+        ).values(
+            'bon_de_commande_interne_item__produit__designation',
+            'bon_de_commande_interne_item__produit__quantite_en_stock'
+        ).annotate(
+            total_consumed=Sum('quantite_accorde')
+        ).order_by('-total_consumed')  # Sort by consumed quantity in descending order
+
+        # Prepare the response data
+        data = []
+        for item in consumed_data:
+            designation = item['bon_de_commande_interne_item__produit__designation']
+            consumed = item['total_consumed']
+            remaining = item['bon_de_commande_interne_item__produit__quantite_en_stock']
+
+            data.append({
+                'designation': designation,
+                'consumed': consumed,
+                'remaining': remaining,
+                'remaining_color': 'red' if remaining <= 10 else 'green'  # Change color based on remaining quantity
+            })
+
+        return JsonResponse(data, safe=False)
+    
+class GenerateEtatPDFView(views.APIView):
+     def get(self, request, etat_inventaire_id, *args, **kwargs):
+
+        try:
+            etat_inventaire = EtatInventaire.objects.get(id=etat_inventaire_id)
+        except EtatInventaire.DoesNotExist:
+            return Response({'message': 'Bon de commande not found'}, status=404)
+
+
+        items = etat_inventaire.produits.all()
+
+        # Create a PDF document
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+        elements = []
+
+        # Define styles
+        styles = getSampleStyleSheet()
+        bold_body_text_style = styles['BodyText']
+        bold_body_text_style.fontName = 'Helvetica-Bold'
+        bold_body_text_style.fontSize = 10  # Increased font size
+
+        ttite1_text = f"<b>MINISTERE DE L'ENSEIGNEMENT SUPERIEUR ET DE LA RECHERCHE SCIENTIFIQUE</b>"
+        title_style = ParagraphStyle(name='Title', fontSize=10, leading=20, alignment=1)
+        title1 = Paragraph(ttite1_text, style=title_style)
+        elements.append(title1)
+
+        elements.append(Paragraph("Identification du prestataire : ", bold_body_text_style))
+        elements.append(Paragraph("", bold_body_text_style))
+        # Add supplier information
+        data = [
+            ["sécrétariat général", ""],
+            ["sous-diréction des finances, de la comptabilité et des moyens", ""],
+            ["Service des moyens, de l'inventaire et des archives",""],
+        ]
+
+        # Create the table and add it to elements
+        company_table = Table(data , colWidths=[200, 200])
+
+        # Apply style to the table
+        company_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1),2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ]))
+
+        # Add company_table to the document
+        elements.append(company_table)
+        print(etat_inventaire.datetime)
+        formatted_datetime = etat_inventaire.datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+        title_text = f"<b>Inventaire arreté {etat_inventaire.id} au  {formatted_datetime}</b>"
+
+        title_style = ParagraphStyle(name='Title', fontSize=10, leading=20, alignment=1)  # Define paragraph style
+        title = Paragraph(title_text, style=title_style)
+
+
+        elements.append(title)
+
+        # Add item information
+        elements.append(Paragraph("Caractéristiques de la commande :", bold_body_text_style))
+        elements.append(Paragraph(f"<b>Chapitre :</b> {etat_inventaire.chapitre} ", title_style))
+        elements.append(Paragraph(f"<strong>Article :</strong> {etat_inventaire.article} ", title_style))
+        elements.append(Paragraph(" ", bold_body_text_style))
+        item_data = [["N°","Designation", "N° D'inventaire", "Reste","Entrée","Sortie","Qantité Logique","Qantité Physique","Ecart", "Obs"]]
+        for index, item in enumerate(items):
+            item_data.append([str(index+1), item.produit.designation, str(item.N_inventaire), str(item.reste), str(item.quantite_entree),str(item.quantite_sortie),str(item.quantite_physique),str(item.quantite_logique),str(item.ecrat),str(item.observation)])
+        # Define styles
+        s = getSampleStyleSheet()["BodyText"]
+        s.textColor = 'black'
+        s.wordWrap = 'CJK'
+        s.fontSize = 9
+
+        s2 = getSampleStyleSheet()["BodyText"]
+        s2.fontName = 'Helvetica-Bold'
+        s2.wordWrap='CJK'
+        s.fontSize = 9
+
+        print(item_data)
+
+        # Create data with styles
+        data2 = [
+            [Paragraph(cell, s2) if row_index == 0 else Paragraph(cell, s) for cell in row]
+            for row_index, row in enumerate(item_data)
+        ]
+       
+        items_table = Table(data2,colWidths=[30,100,80,40,40,40,60,60,40,50])
+        items_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0DC1DC')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+            ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+            ('WORDWRAP', (0, 0), (-1, -1), 'WORDWRAP'),  # Adjust right padding
+        ]))
+
+
+        elements.append(items_table)
+
+
+# Define paragraph styles with alignment
+        right_aligned_style = ParagraphStyle(
+            'RightAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=2
+        )
+        Middle_aligned_style = ParagraphStyle(
+            'MiddleAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=1
+        )
+        LEFT_aligned_style = ParagraphStyle(
+            'LeftAligned',
+            fontSize=10,
+            parent=bold_body_text_style,
+            alignment=0
+        )
+
+        # Create paragraphs
+        paragraphs = [
+            Paragraph("LE MAGASINIER", right_aligned_style),
+            Paragraph("", Middle_aligned_style),
+            Paragraph("LE DEMANDEUR", LEFT_aligned_style)
+        ]
+
+        # Create a table with a single row and three columns
+        data = [paragraphs]
+        table = Table(data, colWidths=[4*inch, 4*inch, 4*inch])
+
+        # Add the table to elements
+        elements.append(table)
+
+
+        # Build the PDF document
+        doc.build(elements)
+
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename=f'bondecommande_{etat_inventaire_id}.pdf')
+    

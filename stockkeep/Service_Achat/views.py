@@ -75,7 +75,7 @@ class ArticleProduitsAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         article_id = self.kwargs['article_id']
-        return Produit.objects.filter(article_id=article_id)
+        return Produit.objects.filter(articles__id=article_id)
     
 
 class ChapitreArticlesAPIView(generics.ListAPIView):

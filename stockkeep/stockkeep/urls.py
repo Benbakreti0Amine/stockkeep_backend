@@ -51,6 +51,7 @@ urlpatterns = [
     path('magasinier/', include('magasinier.urls')),
     path('responsable/', include('Responsable_structure.urls')),
     path('directeur/', include('directeur.urls')),
+    path('notifications/', include('notifications.urls')), # new
 
 
 ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

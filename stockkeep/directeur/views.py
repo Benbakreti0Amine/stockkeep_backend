@@ -3,9 +3,10 @@ from rest_framework import generics
 from consommateur.models import BonDeCommandeInterne
 from magasinier.models import EtatInventaire
 from directeur.models import TicketSuiviCommande
-from .serializers import BonDeCommandeInterneDicSerializer,EtatInventaireDirSerializer, TicketSuiviCommandeSerializer
-from rest_framework.response import Response
+from .serializers import BonDeCommandeInterneDicSerializer,EtatInventaireDirSerializer,TicketSuiviCommandeSerializer
 from rest_framework.views import APIView
+from rest_framework.response import Response
+# Create your views here.
 
 class BonDeCommandeInterneRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BonDeCommandeInterne.objects.all()
@@ -28,8 +29,6 @@ class TicketListView(generics.ListAPIView):
     queryset = TicketSuiviCommande.objects.all()
     serializer_class = TicketSuiviCommandeSerializer
 
-
-    
 class TicketSearchView(APIView):
     def get(self, request, bon_de_commande_id):
         tickets = TicketSuiviCommande.objects.filter(bon_de_commande_id=bon_de_commande_id)
