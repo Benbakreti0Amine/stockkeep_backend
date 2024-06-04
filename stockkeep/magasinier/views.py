@@ -11,8 +11,10 @@ from .serializers import BonDeReceptionSerializer
 from .models import BonDeReception, BonDeReceptionItem
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem, Consommateur
 from .serializers import BonDeReceptionSerializer, BonDeSortieItemSerializer, BonDeSortieSerializer
-from .serializers import BonDeCommandeInterneMagaSerializer, EtatInventaireSerializer,FicheMovementSerializer,AdditionalInfoSerializer
+from .serializers import BonDeCommandeInterneMagaSerializer,EtatInventaireSerializer, FicheMovementSerializer,AdditionalInfoSerializer
+# 
 from .models import BonDeReception, BonDeReceptionItem,BonDeSortie,EtatInventaire, BonDeSortieItem,FicheMovement
+# 
 from reportlab.lib.pagesizes import A4
 from django.http import FileResponse
 

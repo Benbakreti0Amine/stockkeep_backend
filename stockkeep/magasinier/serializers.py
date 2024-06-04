@@ -4,8 +4,11 @@ from rest_framework import serializers
 from Service_Achat.models import Produit,Chapitre,Article
 from django.db import transaction
 from django.db.models import Sum
-from .models import BonDeReception, BonDeReceptionItem,EtatInventaireProduit,EtatInventaire 
+from .models import AdditionalInfo, BonDeReception, BonDeReceptionItem, FicheMovement,EtatInventaireProduit,EtatInventaire 
+# 
+
 from .models import BonDeSortie, BonDeSortieItem,FicheMovement,AdditionalInfo
+#
 from consommateur.models import  BonDeCommandeInterneItem,BonDeCommandeInterne
 from directeur.models import TicketSuiviCommande
 
@@ -109,7 +112,6 @@ class BonDeCommandeInterneMagaSerializer(serializers.ModelSerializer):
 
         return bon_de_commande
     
-######################################################################
 ##################################################################
 class EtatInventaireProduitSerializer(serializers.ModelSerializer):
     produit = serializers.SlugRelatedField(queryset=Produit.objects.all(), slug_field="designation")

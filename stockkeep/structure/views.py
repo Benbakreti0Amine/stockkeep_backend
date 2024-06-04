@@ -1,6 +1,8 @@
 
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
+from consommateur.models import BonDeCommandeInterne
+from consommateur.serializers import BonDeCommandeInterneSerializer
 from users.permissions import HasPermission
 from .models import Structure
 from .serializers import StructureSerializer
@@ -28,3 +30,19 @@ class RetrieveUpdateDeleteStructure(generics.RetrieveUpdateDestroyAPIView):
 
             return super().destroy(request, *args, **kwargs)
 
+class StructureByResponsibleView(generics.ListAPIView):
+    serializer_class = StructureSerializer
+
+    def get_queryset(self):
+        responsible_id = self.kwargs['responsible_id']
+        return Structure.objects.filter(responsible__id=responsible_id)
+    
+class BonDeCommandeInterneByResponsibleView(generics.ListAPIView):
+    serializer_class = BonDeCommandeInterneSerializer
+
+    def get_queryset(self):
+        responsible_id = self.kwargs['responsible_id']
+        # Find all structures managed by the given responsible_id
+        structures = Structure.objects.filter(responsible__id=responsible_id)
+        # Filter BonDeCommandeInterne based on the structures' ids
+        return BonDeCommandeInterne.objects.filter(user_id__consommateur__structure__in=structures)

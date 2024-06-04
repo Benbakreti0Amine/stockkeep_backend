@@ -44,8 +44,17 @@ class BonDeCommandeInterneRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BonDeCommandeInterne.objects.all()
     serializer_class = BonDeCommandeInterneSerializer
 
+class BonDeCommandeInterneByStructureView(generics.ListAPIView):
+    serializer_class = BonDeCommandeInterneSerializer
+
+    def get_queryset(self):
+        structure_id = self.kwargs['structure_id']
+        return BonDeCommandeInterne.objects.filter(user_id__consommateur__structure_id=structure_id)
 
 def bci_statistics_for_consommateur(request, id):
+
+
+
     # Get the consommateur object or return 404 if not found
     consommateur = get_object_or_404(Consommateur, id=id)
 
