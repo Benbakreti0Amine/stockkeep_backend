@@ -1,0 +1,2 @@
+
+This project aims to develop a store management system exclusively for students, teachers, and staff at ESI SBA. It will streamline access to academic supplies and IT equipment needed for university activities. The web application is accessible to all community members through standard web browsers. Additionally, a mobile app will be developed to allow users to browse and request supplies conveniently from their mobile devices on campus. The backend is built using Django REST Framework to ensure a robust and scalable system.
