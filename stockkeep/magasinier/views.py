@@ -20,7 +20,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
 from reportlab.lib.styles import ParagraphStyle,getSampleStyleSheet
 from reportlab.lib.units import inch
-
+from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from django.http import JsonResponse
 from django.views import View
 from django.db.models.functions import ExtractMonth, ExtractYear
@@ -29,45 +29,58 @@ import calendar
 import json
 
 class GenerateReceipt(APIView):
+    parser_classes = [JSONParser,MultiPartParser, FormParser]
     def post(self, request):
         bon_de_commande_id = request.data.get('bon_de_commande_id', None)
+        facture = request.FILES.get('facture', None)
         items_data = request.data.get('items', [])
+        print(items_data)
+        print(type(items_data))
+        
 
+        if isinstance(items_data, str):
+            try:
+                items_data = json.loads(items_data)
+            except json.JSONDecodeError:
+                return Response({'error': 'Invalid format for items.'}, status=status.HTTP_400_BAD_REQUEST)
+    
         if bon_de_commande_id is None:
             return Response({'error': 'Veuillez fournir un identifiant de bon de commande.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            bon_de_commande = BonDeCommande.objects.get(id=bon_de_commande_id)
-        except BonDeCommande.DoesNotExist:
-            return Response({'error': 'Le bon de commande spécifié n\'existe pas.'}, status=status.HTTP_404_NOT_FOUND)
-        
-        bon_de_reception_count = BonDeReception.objects.filter(bon_de_commande=bon_de_commande).count()
-        bon_de_reception = BonDeReception.objects.create(bon_de_commande=bon_de_commande)
-        
-        print(bon_de_reception_count)
+        if isinstance(items_data, list):
+            try:
+                bon_de_commande = BonDeCommande.objects.get(id=bon_de_commande_id)
+            except BonDeCommande.DoesNotExist:
+                return Response({'error': 'Le bon de commande spécifié n\'existe pas.'}, status=status.HTTP_404_NOT_FOUND)
+            
+            bon_de_reception_count = BonDeReception.objects.filter(bon_de_commande=bon_de_commande).count()
+            bon_de_reception = BonDeReception.objects.create(bon_de_commande=bon_de_commande,facture=facture)
+            
+            print(bon_de_reception_count)
 
-        for item_data in items_data:
-            nom_produit = item_data.get('nom_produit')
-            # print(nom_produit)
-            quantite_livree = item_data.get('quantite_livree')
-            # Trouver l'objet Item correspondant dans le bon de commande
-            items = bon_de_commande.items.filter(produit__designation=nom_produit)
-            item = items.first()
-            # print(items)
-            if item:
-                # Check if it's the first reception for this product
-                reception = BonDeReceptionItem.objects.filter(nom_produit=nom_produit)
-                # print(reception)
-                first_reception = bon_de_reception_count == 0
+            for item_data in items_data:
+                print(item_data)
+                nom_produit = item_data.get('nom_produit')
+                # print(nom_produit)
+                quantite_livree = item_data.get('quantite_livree')
+                # Trouver l'objet Item correspondant dans le bon de commande
+                items = bon_de_commande.items.filter(produit__designation=nom_produit)
+                item = items.first()
+                # print(items)
+                if item:
+                    # Check if it's the first reception for this product
+                    reception = BonDeReceptionItem.objects.filter(nom_produit=nom_produit)
+                    # print(reception)
+                    first_reception = bon_de_reception_count == 0
 
-                if first_reception:
-                    quantite_commandee = item.quantite # No previous orders
-                else:
-                    # Retrieve the most recent BonDeReceptionItem and get its reste_a_livrer value
-                    last_reception_item = reception.order_by('-id').first()
-                    quantite_commandee = last_reception_item.reste_a_livrer
+                    if first_reception:
+                        quantite_commandee = item.quantite # No previous orders
+                    else:
+                        # Retrieve the most recent BonDeReceptionItem and get its reste_a_livrer value
+                        last_reception_item = reception.order_by('-id').first()
+                        quantite_commandee = last_reception_item.reste_a_livrer
 
-                BonDeReceptionItem.objects.create(bon_de_reception=bon_de_reception, nom_produit=nom_produit, quantite_commandee=quantite_commandee, quantite_livree=quantite_livree)
+                    BonDeReceptionItem.objects.create(bon_de_reception=bon_de_reception, nom_produit=nom_produit, quantite_commandee=quantite_commandee, quantite_livree=quantite_livree)
 
         serializer = BonDeReceptionSerializer(bon_de_reception)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -76,10 +89,12 @@ class GenerateReceipt(APIView):
 class BonDeReceptionListView(generics.ListAPIView):
     queryset = BonDeReception.objects.all()
     serializer_class = BonDeReceptionSerializer
+    parser_classes = (MultiPartParser, FormParser)
     
 class BonDeReceptionRUDView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BonDeReception.objects.all()
     serializer_class = BonDeReceptionSerializer
+    parser_classes = [MultiPartParser, FormParser]
 
       
 

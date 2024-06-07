@@ -3,11 +3,14 @@ from Service_Achat.models import BonDeCommande, Produit,Chapitre,Article
 from consommateur.models import BonDeCommandeInterne, BonDeCommandeInterneItem
 from users.models import User
 from django.db import transaction
+from notifications.models import Notification
+from magasinier.middleware import current_request
 
 
 class BonDeReception(models.Model):
     bon_de_commande = models.ForeignKey(BonDeCommande, on_delete=models.CASCADE, related_name='receipts')
     date = models.DateField(auto_now_add=True)
+    facture = models.FileField(upload_to='pdfs/', null=True, blank=True)
     
 
     def __str__(self):
@@ -82,6 +85,16 @@ class BonDeSortieItem(models.Model):
                 # Subtract quantite_accorde from quantite_en_stock of Produit
                 produit.quantite_en_stock -= self.quantite_accorde
                 produit.save()
+
+                if produit.quantite_en_stock <= produit.quantite_en_security:
+
+                    user = current_request().user
+                    Notification.objects.get_or_create(
+                    recipient=user,
+                    message=f"Product with id {produit.id} reaches the quantity of security.",
+                    role=user.role,
+                    titre="Quantity of security"
+                )
 
 class EtatInventaire(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)

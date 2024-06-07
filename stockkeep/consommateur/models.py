@@ -46,8 +46,8 @@ class BonDeCommandeInterne(models.Model):
     date = models.DateField(auto_now_add=True)
     STATUS_CHOICES = (
         ('Created succesfully', 'Created succesfully'),
-        ('Consulted by the responsable', 'Consulted by the responsable'),
-        ('Consulted by the director', 'Consulted by the director'),
+        ('Validated by the responsable', 'Validated by the responsable'),
+        ('Validated by the director', 'Validated by the director'),
         ('Delivered', 'Delivered'),
         ('External Discharge', 'External Discharge'),
     )

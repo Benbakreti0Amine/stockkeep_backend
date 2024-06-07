@@ -21,7 +21,7 @@ class RetrieveUpdateDeleteStructure(generics.RetrieveUpdateDestroyAPIView):
             print(instance)
             
             # Check if the instance has any related objects
-            if instance.consommateur_set.exists():
+            if instance.consommateurs.exists():
                 # Customize this message according to your requirements
                 error_message = "Cannot delete this object because it has related objects."
                 raise ValidationError(error_message)

@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date', models.DateField(auto_now_add=True)),
-                ('status', models.CharField(choices=[('Created succesfully', 'Created succesfully'), ('Consulted by the responsable', 'Consulted by the responsable'), ('Consulted by the director', 'Consulted by the director'), ('Delivered', 'Delivered'), ('External Discharge', 'External Discharge')], max_length=40)),
+                ('status', models.CharField(choices=[('Created succesfully', 'Created succesfully'), ('Validated by the responsable', 'Validated by the responsable'), ('Validated by the director', 'Validated by the director'), ('Delivered', 'Delivered'), ('External Discharge', 'External Discharge')], max_length=40)),
                 ('type', models.CharField(choices=[('Supply', 'Supply'), ('Decharge', 'Decharge')], max_length=40)),
             ],
         ),

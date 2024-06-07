@@ -63,13 +63,18 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
     class Meta:
         model = BonDeCommandeInterne
         fields = ['id', 'user_id', 'items', 'status','type', 'date']
-
+    
     def update(self, instance, validated_data):
-
         items_data = validated_data.pop('items')
         print(items_data)
+
+        # Update the status before calling super().update()
+        instance.status = "Validated by the director"
+
+        # Perform the update and set status without saving immediately
         instance = super().update(instance, validated_data)
-        instance.status = "Consulted by the director"
+
+        # Update the related items
         for item_data in items_data:
             produit = item_data.get('produit')
             print(produit)
@@ -83,10 +88,13 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
                     item.save()
 
         items_info = [{'item': item.produit.designation, 'quantite': item.quantite_accorde} for item in instance.items.all()]
-        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='directeur', items_info=items_info) 
+        TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='directeur', items_info=items_info)
+
+        # Save the instance only once after all changes
         instance.save()
-        return instance    
-    
+
+        return instance
+
 
 
 class EtatInventaireDicProduitSerializer(serializers.ModelSerializer):

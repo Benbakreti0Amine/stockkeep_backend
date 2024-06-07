@@ -9,12 +9,14 @@ from django.shortcuts import get_object_or_404
 from .models import BonDeCommandeInterne, Consommateur
 from datetime import datetime
 import calendar
+from rest_framework.parsers import MultiPartParser, FormParser
 
 # Create your views here.
 
 
 
 class ListCreateCons(generics.ListCreateAPIView):
+    
 
     queryset = Consommateur.objects.all()
     serializer_class = UserSerializer

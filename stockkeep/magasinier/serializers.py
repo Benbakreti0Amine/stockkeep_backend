@@ -19,7 +19,7 @@ class BonDeReceptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BonDeReception
-        fields = ['id', 'bon_de_commande', 'date', 'items']
+        fields = ['id', 'bon_de_commande', 'date','facture', 'items']
 
 ########################################################################################
 ###########################################################################################
