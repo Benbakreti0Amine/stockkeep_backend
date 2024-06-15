@@ -48,9 +48,10 @@ class BonDeSortieSerializer(serializers.ModelSerializer):
         print(f"1",bon_de_commande_interne_id)
         bon_de_commande_interne = BonDeCommandeInterne.objects.get(pk=bon_de_commande_interne_id)
         validated_data['type'] = 'Decharge' if bon_de_commande_interne.type == 'Decharge' else 'Supply'
-        print(bon_de_commande_interne)
+        
         bon_de_commande_interne.status = 'Delivered'
         bon_de_commande_interne.save()
+        print(bon_de_commande_interne)
 
         items_data = validated_data.pop('items')
         print(f"5",items_data)

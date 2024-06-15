@@ -84,6 +84,7 @@ class BonDeCommandeInterneDicSerializer(serializers.ModelSerializer):
 
         items_info = [{'item': item.produit.designation, 'quantite': item.quantite_accorde} for item in instance.items.all()]
         TicketSuiviCommande.create_ticket(bon_de_commande=instance, etape='directeur', items_info=items_info) 
+        print(instance)
         instance.save()
         return instance    
     

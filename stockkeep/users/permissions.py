@@ -30,9 +30,9 @@ def _permission(request, view) -> bool:
     
     codename = f'{action_type}_{model.__name__.lower()}'
     print(codename)
-    print(request.user.role)
+    
 
-   
+    print(request.user.role)
     return RolePermission.objects.filter(
         auth_permission__codename=codename,
         role=request.user.role

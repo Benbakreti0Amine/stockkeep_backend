@@ -23,11 +23,10 @@ class UserSerializer(serializers.ModelSerializer):
     def to_representation(self,instance):
         rep = super(UserSerializer,self).to_representation(instance)
         rep['structure']=instance.structure.name
-        # rep['role']=instance.role.name
         return rep
     
     def validate(self, attrs):
-     email = attrs.get("email")  # Use get() method to safely retrieve email field
+     email = attrs.get("email") 
 
      if email:
         email_exists = User.objects.filter(email=email).exists()
@@ -57,12 +56,12 @@ class BonDeCommandeInterneItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'produit','quantite_demandee','quantite_accorde']
 
 class BonDeCommandeInterneSerializer(serializers.ModelSerializer):
-    items = BonDeCommandeInterneItemSerializer(many=True)  # Nested relationship field
+    items = BonDeCommandeInterneItemSerializer(many=True)  
 
     class Meta:
         model = BonDeCommandeInterne
         fields = ['id', 'user_id', 'items', 'status','type', 'date']
-        read_only_fields = ['status']  # Mark status field as read-only
+        read_only_fields = ['status'] 
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
