@@ -15,7 +15,7 @@ cssselect==1.2.0
 defusedxml==0.8.0rc2
 Deprecated==1.2.14
 distlib==0.3.7
-Django==4.2.4
+Django==4.2.26
 django-cors-headers==4.3.1
 django-decouple==2.1
 django-oauth-toolkit==2.3.0
